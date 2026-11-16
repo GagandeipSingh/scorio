@@ -117,36 +117,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.dp, vertical: 4.dp),
       child: SizedBox(
-        height: 44.dp,
+        height: 40.dp,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            SizedBox(width: 4.dp),
             // App Brand Mark (Breeze style)
             Image.asset(
               'assets/icon/mark.png',
-              height: 23.dp,
+              height: 19.dp,
               color: p.ink,
               colorBlendMode: BlendMode.srcIn,
               semanticLabel: 'Scorio',
               errorBuilder: (context, error, stackTrace) => Icon(
                 CupertinoIcons.chart_bar_fill,
                 color: p.accent,
-                size: 22.dp,
+                size: 19.dp,
               ),
             ),
-            SizedBox(width: 8.dp),
-            // Brand Title
-            Text(
-              'Scorio',
-              style: TextStyle(
-                color: p.ink,
-                fontSize: 20.sp,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.3,
+            SizedBox(width: 10.dp),
+            // Brand Title (Breeze typographic proportions)
+            Expanded(
+              child: Text(
+                'Scorio',
+                style: TextStyle(
+                  color: p.ink,
+                  fontSize: 21.sp,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.4,
+                ),
               ),
             ),
-            const Spacer(),
-            // Top capsule search button (compact, responsive)
+            // Top search button
             RoundGlassButton(
               icon: CupertinoIcons.search,
               size: 38.dp,
@@ -299,215 +301,186 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onLongPress: () => _showClassOptions(context, cls, colorIndex),
         label: cls.displayName,
         builder: (down) => GlassSurface(
-          radius: 22.dp,
+          radius: 20.dp,
           lit: down,
-          padding: EdgeInsets.symmetric(horizontal: 16.dp, vertical: 14.dp),
+          padding: EdgeInsets.fromLTRB(16.dp, 13.dp, 8.dp, 13.dp),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Minimalist Translucent Apple Squircle Class Avatar
+              // Breeze-style circular vibrant gradient avatar with glowing shadow & white rim
               Container(
-                  width: 44.dp,
-                  height: 44.dp,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14.dp),
-                    color: accent.withValues(alpha: p.dark ? 0.16 : 0.09),
-                    border: Border.all(
-                      color: accent.withValues(alpha: p.dark ? 0.30 : 0.22),
-                      width: 1.1.dp,
+                width: 44.dp,
+                height: 44.dp,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color.lerp(accent, Colors.white, 0.16)!,
+                      Color.lerp(accent, Colors.black, 0.10)!,
+                    ],
+                  ),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: p.dark ? 0.25 : 0.40),
+                    width: 1.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withValues(alpha: p.dark ? 0.35 : 0.25),
+                      blurRadius: 10.dp,
+                      offset: Offset(0, 3.dp),
                     ),
-                  ),
-                  child: Center(
-                    child: avatarInfo.icon != null
-                        ? Icon(
-                            avatarInfo.icon,
-                            size: 20.dp,
-                            color: accent,
-                          )
-                        : Text(
-                            avatarInfo.label!,
-                            style: TextStyle(
-                              color: accent,
-                              fontWeight: FontWeight.w700,
-                              fontSize: avatarInfo.label!.length > 2
-                                  ? 12.5.sp
-                                  : 15.sp,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                  ),
+                  ],
                 ),
-                SizedBox(width: 13.dp),
-                // Title and Info
-                Expanded(
+                child: Center(
+                  child: avatarInfo.icon != null
+                      ? Icon(
+                          avatarInfo.icon,
+                          size: 20.dp,
+                          color: Colors.white,
+                        )
+                      : Text(
+                          avatarInfo.label!,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: avatarInfo.label!.length > 2
+                                ? 12.5.sp
+                                : 15.sp,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                ),
+              ),
+              SizedBox(width: 14.dp),
+              // Title and clean typographic subtitle (Breeze style)
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 2.dp),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              cls.name,
-                              style: TextStyle(
-                                color: p.ink,
-                                fontSize: 16.5.sp,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.3,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (cls.section != null && cls.section!.isNotEmpty) ...[
-                            SizedBox(width: 8.dp),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 7.dp, vertical: 2.dp),
-                              decoration: BoxDecoration(
-                                color: accent.withValues(
-                                    alpha: p.dark ? 0.16 : 0.10),
-                                borderRadius: BorderRadius.circular(6.dp),
-                                border: Border.all(
-                                  color: accent.withValues(
-                                      alpha: p.dark ? 0.28 : 0.20),
-                                  width: 0.8.dp,
-                                ),
-                              ),
-                              child: Text(
-                                cls.section!.length <= 2
+                      Text(
+                        cls.name,
+                        style: TextStyle(
+                          color: p.ink,
+                          fontSize: 16.5.sp,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 3.5.dp),
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            if (cls.section != null &&
+                                cls.section!.isNotEmpty) ...[
+                              TextSpan(
+                                text: cls.section!.length <= 2
                                     ? 'Sec ${cls.section}'
                                     : cls.section!,
                                 style: TextStyle(
                                   color: accent,
-                                  fontSize: 11.5.sp,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
+                              TextSpan(text: '  ·  '),
+                            ],
+                            TextSpan(
+                              text:
+                                  '${students.length} ${students.length == 1 ? "student" : "students"}',
                             ),
-                          ],
-                        ],
-                      ),
-                      SizedBox(height: 5.dp),
-                      Row(
-                        children: [
-                          Icon(
-                            CupertinoIcons.person_2,
-                            size: 13.dp,
-                            color: p.sub,
-                          ),
-                          SizedBox(width: 5.dp),
-                          Text(
-                            '${students.length} ${students.length == 1 ? "student" : "students"}',
-                            style: TextStyle(
-                              color: p.sub,
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          if (students.isNotEmpty) ...[
-                            Text(
-                              '  ·  ',
-                              style: TextStyle(color: p.faint),
-                            ),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 6.dp, vertical: 1.5.dp),
-                              decoration: BoxDecoration(
-                                color: avgScore != null && avgScore > 0
-                                    ? const Color(0xFF10B981).withValues(
-                                        alpha: p.dark ? 0.18 : 0.10)
-                                    : (avgScore != null && avgScore < 0
-                                        ? const Color(0xFFEF4444).withValues(
-                                            alpha: p.dark ? 0.18 : 0.10)
-                                        : (p.dark
-                                            ? Colors.white10
-                                            : const Color(0xFFF1F5F9))),
-                                borderRadius: BorderRadius.circular(5.dp),
-                                border: Border.all(
-                                  color: avgScore != null && avgScore > 0
-                                      ? const Color(0xFF10B981).withValues(
-                                          alpha: p.dark ? 0.28 : 0.22)
-                                      : (avgScore != null && avgScore < 0
-                                          ? const Color(0xFFEF4444).withValues(
-                                              alpha: p.dark ? 0.28 : 0.22)
-                                          : Colors.transparent),
-                                  width: 0.8.dp,
-                                ),
-                              ),
-                              child: Text(
-                                avgScore != null
-                                    ? (avgScore >= 0
-                                        ? 'avg +$avgScore'
-                                        : 'avg $avgScore')
-                                    : 'avg 0',
+                            if (avgScore != null) ...[
+                              TextSpan(text: '  ·  '),
+                              TextSpan(
+                                text: avgScore >= 0
+                                    ? 'avg +$avgScore'
+                                    : 'avg $avgScore',
                                 style: TextStyle(
-                                  color: avgScore != null && avgScore > 0
+                                  color: avgScore > 0
                                       ? (p.dark
                                           ? const Color(0xFF34D399)
                                           : const Color(0xFF059669))
-                                      : (avgScore != null && avgScore < 0
+                                      : (avgScore < 0
                                           ? (p.dark
                                               ? const Color(0xFFF87171)
                                               : const Color(0xFFDC2626))
                                           : p.sub),
-                                  fontSize: 11.5.sp,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: p.sub, fontSize: 13.sp),
                       ),
                     ],
                   ),
                 ),
-                // Top score star pill if any
-                if (topStudent != null && topStudent.score > 0) ...[
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 8.dp, vertical: 3.5.dp),
-                    decoration: BoxDecoration(
+              ),
+              // Top score star pill if any
+              if (topStudent != null && topStudent.score > 0) ...[
+                Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 7.dp, vertical: 3.dp),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B)
+                        .withValues(alpha: p.dark ? 0.20 : 0.12),
+                    borderRadius: BorderRadius.circular(8.dp),
+                    border: Border.all(
                       color: const Color(0xFFF59E0B)
-                          .withValues(alpha: p.dark ? 0.20 : 0.12),
-                      borderRadius: BorderRadius.circular(8.dp),
-                      border: Border.all(
-                        color: const Color(0xFFF59E0B)
-                            .withValues(alpha: p.dark ? 0.32 : 0.22),
-                        width: 0.8.dp,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          CupertinoIcons.star_fill,
-                          size: 10.dp,
-                          color: const Color(0xFFF59E0B),
-                        ),
-                        SizedBox(width: 4.dp),
-                        Text(
-                          '+${topStudent.score}',
-                          style: TextStyle(
-                            color: const Color(0xFFD97706),
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
+                          .withValues(alpha: p.dark ? 0.35 : 0.22),
+                      width: 0.8.dp,
                     ),
                   ),
-                  SizedBox(width: 8.dp),
-                ],
-                Icon(
-                  CupertinoIcons.chevron_forward,
-                  size: 14.dp,
-                  color: p.sub.withValues(alpha: 0.50),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.star_fill,
+                        size: 10.dp,
+                        color: const Color(0xFFF59E0B),
+                      ),
+                      SizedBox(width: 3.5.dp),
+                      Text(
+                        '+${topStudent.score}',
+                        style: TextStyle(
+                          color: p.dark
+                              ? const Color(0xFFFBBF24)
+                              : const Color(0xFFD97706),
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                SizedBox(width: 4.dp),
               ],
-            ),
+              // Breeze-style three-dots menu
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _showClassOptions(context, cls, colorIndex),
+                child: Padding(
+                  padding: EdgeInsets.all(8.dp),
+                  child: Icon(
+                    CupertinoIcons.ellipsis,
+                    size: 20.dp,
+                    color: p.sub,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
   }
 
   // ── Floating Bottom Dock (Breeze style) ───────────────────────────

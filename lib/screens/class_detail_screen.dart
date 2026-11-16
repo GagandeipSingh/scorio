@@ -592,209 +592,142 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
           onLongPress: () => _showStudentOptions(context, cls, student),
           label: student.name,
           builder: (down) => GlassSurface(
-            radius: 22.dp,
+            radius: 20.dp,
             lit: down,
-            padding: EdgeInsets.symmetric(horizontal: 16.dp, vertical: 13.dp),
+            padding: EdgeInsets.fromLTRB(16.dp, 12.dp, 10.dp, 12.dp),
             child: Row(
               children: [
-                // Minimalist Translucent Apple Squircle Student Avatar
-                Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: 44.dp,
-                        height: 44.dp,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14.dp),
-                          color: studentAccent.withValues(
-                              alpha: p.dark ? 0.16 : 0.09),
-                          border: Border.all(
-                            color: studentAccent.withValues(
-                                alpha: p.dark ? 0.30 : 0.22),
-                            width: 1.1.dp,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            initials,
-                            style: TextStyle(
-                              color: studentAccent,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14.5.sp,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                        ),
+                // Breeze-style circular vibrant gradient avatar with glowing shadow & white rim
+                Container(
+                  width: 44.dp,
+                  height: 44.dp,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color.lerp(studentAccent, Colors.white, 0.16)!,
+                        Color.lerp(studentAccent, Colors.black, 0.10)!,
+                      ],
+                    ),
+                    border: Border.all(
+                      color:
+                          Colors.white.withValues(alpha: p.dark ? 0.25 : 0.40),
+                      width: 1.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: studentAccent.withValues(alpha: 0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
                       ),
-                      if (isTopScorer)
-                        Positioned(
-                          top: -3.dp,
-                          right: -3.dp,
-                          child: Container(
-                            width: 16.dp,
-                            height: 16.dp,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFF59E0B)
-                                      .withValues(alpha: 0.45),
-                                  blurRadius: 4,
-                                ),
-                              ],
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 1.2,
-                              ),
-                            ),
-                            child: Icon(
-                              CupertinoIcons.star_fill,
-                              size: 9.dp,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
                     ],
                   ),
-                  SizedBox(width: 13.dp),
-                  // Student Name and Roll Number
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                student.name,
-                                style: TextStyle(
-                                  color: p.ink,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 16.sp,
-                                  letterSpacing: -0.3,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            SizedBox(width: 7.dp),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 6.dp, vertical: 1.5.dp),
-                              decoration: BoxDecoration(
-                                color: studentAccent.withValues(
-                                    alpha: p.dark ? 0.16 : 0.10),
-                                borderRadius: BorderRadius.circular(6.dp),
-                                border: Border.all(
-                                  color: studentAccent.withValues(
-                                      alpha: p.dark ? 0.28 : 0.20),
-                                  width: 0.8.dp,
-                                ),
-                              ),
-                              child: Text(
-                                '#${student.rollNumber}',
-                                style: TextStyle(
-                                  color: studentAccent,
-                                  fontSize: 11.5.sp,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
+                  child: Center(
+                    child: Text(
+                      initials,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: initials.length > 2 ? 12.sp : 14.5.sp,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 13.dp),
+                // Student Name and Details (Breeze typographic hierarchy)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        student.name,
+                        style: TextStyle(
+                          color: p.ink,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16.sp,
+                          letterSpacing: -0.3,
                         ),
-                        SizedBox(height: 5.dp),
-                        Row(
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 3.dp),
+                      Text.rich(
+                        TextSpan(
                           children: [
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 6.dp, vertical: 1.5.dp),
-                              decoration: BoxDecoration(
-                                color: student.score > 0
-                                    ? const Color(0xFF10B981).withValues(
-                                        alpha: p.dark ? 0.18 : 0.10)
-                                    : (student.score < 0
-                                        ? const Color(0xFFEF4444).withValues(
-                                            alpha: p.dark ? 0.18 : 0.10)
-                                        : (p.dark
-                                            ? Colors.white10
-                                            : const Color(0xFFF1F5F9))),
-                                borderRadius: BorderRadius.circular(5.dp),
-                                border: Border.all(
-                                  color: student.score > 0
-                                      ? const Color(0xFF10B981).withValues(
-                                          alpha: p.dark ? 0.28 : 0.22)
-                                      : (student.score < 0
-                                          ? const Color(0xFFEF4444).withValues(
-                                              alpha: p.dark ? 0.28 : 0.22)
-                                          : Colors.transparent),
-                                  width: 0.8.dp,
-                                ),
+                            TextSpan(
+                              text: '#${student.rollNumber}',
+                              style: TextStyle(
+                                color: studentAccent,
+                                fontWeight: FontWeight.w700,
                               ),
-                              child: Text(
-                                student.score > 0
-                                    ? '+${student.score} pts'
+                            ),
+                            TextSpan(
+                              text: '  ·  ',
+                              style: TextStyle(
+                                color: p.sub.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            TextSpan(
+                              text: student.score > 0
+                                  ? '+${student.score} pts'
+                                  : (student.score < 0
+                                      ? '${student.score} pts'
+                                      : '0 pts'),
+                              style: TextStyle(
+                                color: student.score > 0
+                                    ? (p.dark
+                                        ? const Color(0xFF34D399)
+                                        : const Color(0xFF059669))
                                     : (student.score < 0
-                                        ? '${student.score} pts'
-                                        : '0 pts'),
-                                style: TextStyle(
-                                  color: student.score > 0
-                                      ? (p.dark
-                                          ? const Color(0xFF34D399)
-                                          : const Color(0xFF059669))
-                                      : (student.score < 0
-                                          ? (p.dark
-                                              ? const Color(0xFFF87171)
-                                              : const Color(0xFFDC2626))
-                                          : p.sub),
-                                  fontSize: 11.5.sp,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                        ? (p.dark
+                                            ? const Color(0xFFF87171)
+                                            : const Color(0xFFDC2626))
+                                        : p.sub),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             if (isTopScorer) ...[
-                              SizedBox(width: 6.dp),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 6.dp, vertical: 1.5.dp),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF59E0B)
-                                      .withValues(alpha: p.dark ? 0.20 : 0.12),
-                                  borderRadius: BorderRadius.circular(5.dp),
-                                  border: Border.all(
-                                    color: const Color(0xFFF59E0B)
-                                        .withValues(alpha: p.dark ? 0.32 : 0.22),
-                                    width: 0.8.dp,
+                              TextSpan(
+                                text: '  ·  ',
+                                style: TextStyle(
+                                  color: p.sub.withValues(alpha: 0.5),
+                                ),
+                              ),
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: Padding(
+                                  padding: EdgeInsets.only(right: 3.dp),
+                                  child: Icon(
+                                    CupertinoIcons.star_fill,
+                                    size: 11.dp,
+                                    color: const Color(0xFFF59E0B),
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      CupertinoIcons.star_fill,
-                                      size: 9.dp,
-                                      color: const Color(0xFFF59E0B),
-                                    ),
-                                    SizedBox(width: 3.dp),
-                                    Text(
-                                      'Top',
-                                      style: TextStyle(
-                                        color: const Color(0xFFD97706),
-                                        fontSize: 10.5.sp,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ],
+                              ),
+                              TextSpan(
+                                text: 'Top',
+                                style: TextStyle(
+                                  color: p.dark
+                                      ? const Color(0xFFFBBF24)
+                                      : const Color(0xFFD97706),
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ],
                           ],
                         ),
-                      ],
-                    ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: p.sub, fontSize: 13.sp),
+                      ),
+                    ],
                   ),
-                  SizedBox(width: 8.dp),
+                ),
+                SizedBox(width: 8.dp),
                   // Tactile High-Contrast Stepper Capsule: [ - ]  Score  [ + ]
                   Container(
                     decoration: BoxDecoration(

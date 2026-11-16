@@ -24,8 +24,8 @@ class Pal {
   LinearGradient get accentFill {
     final a = dark ? 0.94 : 0.98;
     return LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
       colors: [
         const Color(0xFF38BDF8).withValues(alpha: a),
         const Color(0xFF007AF8).withValues(alpha: a),
