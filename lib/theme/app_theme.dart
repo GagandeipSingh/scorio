@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ClassAvatarInfo {
   final String? label;
@@ -268,24 +267,28 @@ class AppTheme {
     final txtSec = dark ? darkTextSecondary : textSecondary;
     final txtTer = dark ? darkTextTertiary : textTertiary;
 
-    final baseTextTheme = GoogleFonts.interTextTheme(
-      TextTheme(
-        headlineLarge: TextStyle(color: txt, fontWeight: FontWeight.w800),
-        headlineMedium: TextStyle(color: txt, fontWeight: FontWeight.w800),
-        headlineSmall: TextStyle(color: txt, fontWeight: FontWeight.w700),
-        titleLarge: TextStyle(color: txt, fontWeight: FontWeight.w600),
-        titleMedium: TextStyle(color: txt, fontWeight: FontWeight.w600),
-        titleSmall: TextStyle(color: txt, fontWeight: FontWeight.w500),
-        bodyLarge: TextStyle(color: txt),
-        bodyMedium: TextStyle(color: txtSec),
-        bodySmall: TextStyle(color: txtTer, fontSize: 12),
-        labelLarge: TextStyle(color: txt, fontWeight: FontWeight.w600),
-      ),
+    final baseTextTheme = TextTheme(
+      headlineLarge: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w800),
+      headlineMedium: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w800),
+      headlineSmall: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w700),
+      titleLarge: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w600),
+      titleMedium: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w600),
+      titleSmall: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w500),
+      bodyLarge: TextStyle(fontFamily: 'Inter', color: txt),
+      bodyMedium: TextStyle(fontFamily: 'Inter', color: txtSec),
+      bodySmall: TextStyle(fontFamily: 'Inter', color: txtTer, fontSize: 12),
+      labelLarge: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w600),
     );
 
     return ThemeData(
       brightness: b,
+      fontFamily: 'Inter',
       scaffoldBackgroundColor: bg,
+      cupertinoOverrideTheme: const CupertinoThemeData(
+        textTheme: CupertinoTextThemeData(
+          textStyle: TextStyle(fontFamily: 'Inter'),
+        ),
+      ),
       colorScheme: ColorScheme(
         brightness: b,
         primary: primary,

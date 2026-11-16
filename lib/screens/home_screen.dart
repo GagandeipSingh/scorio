@@ -122,29 +122,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(width: 4.dp),
-            // App Brand Mark (Breeze style)
+            // App Brand Mark (Breeze style, bold)
             Image.asset(
               'assets/icon/mark.png',
-              height: 19.dp,
+              height: 20.dp,
               color: p.ink,
               colorBlendMode: BlendMode.srcIn,
               semanticLabel: 'Scorio',
               errorBuilder: (context, error, stackTrace) => Icon(
                 CupertinoIcons.chart_bar_fill,
                 color: p.accent,
-                size: 19.dp,
+                size: 20.dp,
               ),
             ),
             SizedBox(width: 10.dp),
-            // Brand Title (Breeze typographic proportions)
+            // Brand Title (Bold Scorio)
             Expanded(
               child: Text(
                 'Scorio',
                 style: TextStyle(
                   color: p.ink,
                   fontSize: 21.sp,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.4,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
                 ),
               ),
             ),
@@ -394,7 +394,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               text:
                                   '${students.length} ${students.length == 1 ? "student" : "students"}',
                             ),
-                            if (avgScore != null) ...[
+                            if (topStudent != null && topStudent.score > 0) ...[
+                              TextSpan(text: '  ·  '),
+                              TextSpan(
+                                text: 'top +${topStudent.score}',
+                                style: TextStyle(
+                                  color: p.dark
+                                      ? const Color(0xFF38BDF8)
+                                      : const Color(0xFF007AF8),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ] else if (avgScore != null) ...[
                               TextSpan(text: '  ·  '),
                               TextSpan(
                                 text: avgScore >= 0
@@ -424,45 +435,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
-              // Top score star pill if any
-              if (topStudent != null && topStudent.score > 0) ...[
-                Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 7.dp, vertical: 3.dp),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B)
-                        .withValues(alpha: p.dark ? 0.20 : 0.12),
-                    borderRadius: BorderRadius.circular(8.dp),
-                    border: Border.all(
-                      color: const Color(0xFFF59E0B)
-                          .withValues(alpha: p.dark ? 0.35 : 0.22),
-                      width: 0.8.dp,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        CupertinoIcons.star_fill,
-                        size: 10.dp,
-                        color: const Color(0xFFF59E0B),
-                      ),
-                      SizedBox(width: 3.5.dp),
-                      Text(
-                        '+${topStudent.score}',
-                        style: TextStyle(
-                          color: p.dark
-                              ? const Color(0xFFFBBF24)
-                              : const Color(0xFFD97706),
-                          fontSize: 11.5.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(width: 4.dp),
-              ],
               // Breeze-style three-dots menu
               GestureDetector(
                 behavior: HitTestBehavior.opaque,

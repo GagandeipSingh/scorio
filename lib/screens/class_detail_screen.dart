@@ -690,30 +690,17 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            if (isTopScorer) ...[
+                            if (isTopScorer && student.score > 0) ...[
                               TextSpan(
                                 text: '  ·  ',
                                 style: TextStyle(
                                   color: p.sub.withValues(alpha: 0.5),
                                 ),
                               ),
-                              WidgetSpan(
-                                alignment: PlaceholderAlignment.middle,
-                                child: Padding(
-                                  padding: EdgeInsets.only(right: 3.dp),
-                                  child: Icon(
-                                    CupertinoIcons.star_fill,
-                                    size: 11.dp,
-                                    color: const Color(0xFFF59E0B),
-                                  ),
-                                ),
-                              ),
                               TextSpan(
                                 text: 'Top',
                                 style: TextStyle(
-                                  color: p.dark
-                                      ? const Color(0xFFFBBF24)
-                                      : const Color(0xFFD97706),
+                                  color: studentAccent,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
