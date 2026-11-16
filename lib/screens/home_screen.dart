@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show BoxWidthStyle;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -72,17 +73,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 SizedBox(
                   height: MediaQuery.paddingOf(context).top + 6.dp,
                 ),
-                if (_searchOpen)
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.dp, vertical: 4.dp),
-                    child: SpringIn(
-                      key: const ValueKey('hdr-search'),
-                      from: Offset(0, -10.dp),
-                      child: _searchField(p),
-                    ),
-                  )
-                else
-                  _header(p, classes),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 1400.dp),
+                    child: _searchOpen
+                        ? Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isWideLayout(context) ? 24.dp : 16.dp,
+                              vertical: 4.dp,
+                            ),
+                            child: SpringIn(
+                              key: const ValueKey('hdr-search'),
+                              from: Offset(0, -10.dp),
+                              child: _searchField(p),
+                            ),
+                          )
+                        : _header(p, classes),
+                  ),
+                ),
                 SizedBox(height: 8.dp),
                 Expanded(
                   child: classes.isEmpty
@@ -233,24 +241,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ── Class List ────────────────────────────────────────────────────
+  // ── Class List (Responsive Multi-Column for Fold, Tablet & Desktop) ──
   Widget _classList(
     BuildContext context,
     Pal p,
     List<ClassModel> filtered,
     List<ClassModel> allClasses,
   ) {
-    return ListView.builder(
-      padding: EdgeInsets.fromLTRB(16.dp, 4.dp, 16.dp, 100.dp),
-      itemCount: filtered.length,
-      itemBuilder: (ctx, i) {
-        final cls = filtered[i];
-        final colorIndex = allClasses.indexOf(cls);
-        return Padding(
-          padding: EdgeInsets.only(bottom: 10.dp),
-          child: _classCard(context, p, cls, colorIndex),
-        );
-      },
+    final isWide = isWideLayout(context);
+    final pad = EdgeInsets.fromLTRB(
+      isWide ? 24.dp : 16.dp,
+      4.dp,
+      isWide ? 24.dp : 16.dp,
+      100.dp,
+    );
+
+    if (isWide) {
+      final gap = 12.dp;
+      final room = math.min(MediaQuery.sizeOf(context).width, 1400.dp) -
+          pad.horizontal;
+      const minColumn = 380.0;
+      final columns = ((room + gap) / (minColumn + gap)).floor().clamp(1, 4);
+
+      return Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 1400.dp),
+          child: GridView.builder(
+            padding: pad,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              mainAxisSpacing: gap,
+              crossAxisSpacing: gap,
+              mainAxisExtent: 74.dp,
+            ),
+            itemCount: filtered.length,
+            itemBuilder: (ctx, i) {
+              final cls = filtered[i];
+              final colorIndex = allClasses.indexOf(cls);
+              return _classCard(context, p, cls, colorIndex);
+            },
+          ),
+        ),
+      );
+    }
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 720.dp),
+        child: ListView.builder(
+          padding: pad,
+          itemCount: filtered.length,
+          itemBuilder: (ctx, i) {
+            final cls = filtered[i];
+            final colorIndex = allClasses.indexOf(cls);
+            return Padding(
+              padding: EdgeInsets.only(bottom: 10.dp),
+              child: _classCard(context, p, cls, colorIndex),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -455,16 +505,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ── Floating Bottom Dock (Breeze style) ───────────────────────────
+  // ── Floating Bottom Dock (Breeze style, responsive on wide screens) ──
   Widget _bottomBar(
     Pal p,
     int classCount,
     int studentCount,
     int avgScore,
   ) {
+    final isWide = isWideLayout(context);
     final bottom = MediaQuery.paddingOf(context).bottom + 14.dp;
+    final sideOffset = isWide
+        ? math.max(24.dp, (MediaQuery.sizeOf(context).width - 1400.dp) / 2 + 24.dp)
+        : 16.dp;
+
     return Positioned(
-      left: 16.dp,
+      left: sideOffset,
       bottom: bottom,
       child: GlassSurface(
         radius: 28.dp,
@@ -502,11 +557,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ── Floating Action Button (Breeze style) ─────────────────────────
+  // ── Floating Action Button (Breeze style, responsive on wide screens) ──
   Widget _fab(Pal p) {
+    final isWide = isWideLayout(context);
     final bottom = MediaQuery.paddingOf(context).bottom + 14.dp;
+    final sideOffset = isWide
+        ? math.max(24.dp, (MediaQuery.sizeOf(context).width - 1400.dp) / 2 + 24.dp)
+        : 16.dp;
+
     return Positioned(
-      right: 16.dp,
+      right: sideOffset,
       bottom: bottom,
       child: GlassPress(
         onTap: () {

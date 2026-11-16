@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show BoxWidthStyle;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -73,25 +74,42 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(height: top + 4.dp),
-                // ── Sleek Breeze-standard header or search bar ──
-                if (_searchOpen)
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.dp, vertical: 2.dp),
-                    child: SpringIn(
-                      key: const ValueKey('detail-search'),
-                      from: Offset(0, -10.dp),
-                      child: _searchField(p),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 1400.dp),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_searchOpen)
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isWideLayout(context) ? 24.dp : 16.dp,
+                              vertical: 2.dp,
+                            ),
+                            child: SpringIn(
+                              key: const ValueKey('detail-search'),
+                              from: Offset(0, -10.dp),
+                              child: _searchField(p),
+                            ),
+                          )
+                        else
+                          _header(p, cls, avgStr),
+                        // ── Controls Strip (Step selector + Filter indicator) ──
+                        if (students.isNotEmpty) ...[
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              isWideLayout(context) ? 24.dp : 16.dp,
+                              10.dp,
+                              isWideLayout(context) ? 24.dp : 16.dp,
+                              6.dp,
+                            ),
+                            child: _controlsStrip(p),
+                          ),
+                        ],
+                      ],
                     ),
-                  )
-                else
-                  _header(p, cls, avgStr),
-                // ── Controls Strip (Step selector + Filter indicator) ──
-                if (students.isNotEmpty) ...[
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(16.dp, 10.dp, 16.dp, 6.dp),
-                    child: _controlsStrip(p),
                   ),
-                ],
+                ),
                 // ── Student List or Empty State ──
                 Expanded(
                   child: students.isEmpty
@@ -105,7 +123,9 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
           if (students.isNotEmpty &&
               (!_searchOpen || MediaQuery.viewInsetsOf(context).bottom == 0))
             Positioned(
-              right: 16.dp,
+              right: isWideLayout(context)
+                  ? math.max(24.dp, (MediaQuery.sizeOf(context).width - 1400.dp) / 2 + 24.dp)
+                  : 16.dp,
               bottom: MediaQuery.paddingOf(context).bottom + 14.dp,
               child: SpringIn(
                 key: const ValueKey('detail-fab'),
@@ -531,21 +551,61 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
       );
     }
 
-    return ListView.builder(
-      padding: EdgeInsets.fromLTRB(
-        16.dp,
-        4.dp,
-        16.dp,
-        MediaQuery.paddingOf(context).bottom + 84.dp,
-      ),
-      itemCount: students.length,
-      itemBuilder: (ctx, i) => _buildStudentCard(
-        ctx,
-        students[i],
-        cls,
-        index: i,
-        isTopScorer:
-            topScore != null && students[i].score == topScore && topScore > 0,
+    final isWide = isWideLayout(context);
+    final pad = EdgeInsets.fromLTRB(
+      isWide ? 24.dp : 16.dp,
+      4.dp,
+      isWide ? 24.dp : 16.dp,
+      MediaQuery.paddingOf(context).bottom + 84.dp,
+    );
+
+    if (isWide) {
+      final gap = 12.dp;
+      final room = math.min(MediaQuery.sizeOf(context).width, 1400.dp) -
+          pad.horizontal;
+      const minColumn = 380.0;
+      final columns = ((room + gap) / (minColumn + gap)).floor().clamp(1, 4);
+
+      return Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 1400.dp),
+          child: GridView.builder(
+            padding: pad,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              mainAxisSpacing: gap,
+              crossAxisSpacing: gap,
+              mainAxisExtent: 74.dp,
+            ),
+            itemCount: students.length,
+            itemBuilder: (ctx, i) => _buildStudentCard(
+              ctx,
+              students[i],
+              cls,
+              index: i,
+              isTopScorer:
+                  topScore != null && students[i].score == topScore && topScore > 0,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 720.dp),
+        child: ListView.builder(
+          padding: pad,
+          itemCount: students.length,
+          itemBuilder: (ctx, i) => _buildStudentCard(
+            ctx,
+            students[i],
+            cls,
+            index: i,
+            isTopScorer:
+                topScore != null && students[i].score == topScore && topScore > 0,
+          ),
+        ),
       ),
     );
   }
