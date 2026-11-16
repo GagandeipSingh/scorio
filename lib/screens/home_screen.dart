@@ -16,8 +16,8 @@ import '../ui/scale.dart';
 import 'class_detail_screen.dart';
 
 enum ClassViewMode {
-  detailed,
-  stats,
+  cards,
+  list,
   grid,
 }
 
@@ -33,7 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _query = '';
   bool _searchOpen = false;
   int _filterMode = 0; // 0: All, 1: Top Scorers, 2: A-Z
-  ClassViewMode _viewMode = ClassViewMode.detailed;
+  ClassViewMode _viewMode = ClassViewMode.cards;
 
   @override
   void dispose() {
@@ -212,8 +212,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // ── Classroom View Controls & Filter Bar (Above Class List) ──────
   Widget _overviewControlBar(Pal p) {
     return GlassSurface(
-      radius: 18.dp,
-      padding: EdgeInsets.symmetric(horizontal: 10.dp, vertical: 7.dp),
+      radius: 20.dp,
+      padding: EdgeInsets.symmetric(horizontal: 12.dp, vertical: 9.dp),
       child: Row(
         children: [
           // Sort Tabs: All · Top · A-Z
@@ -231,18 +231,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // Vertical divider
           Container(
             width: 1.dp,
-            height: 14.dp,
+            height: 16.dp,
             color: p.faint,
-            margin: EdgeInsets.symmetric(horizontal: 4.dp),
+            margin: EdgeInsets.symmetric(horizontal: 5.dp),
           ),
-          // View Mode Options: Detailed · Stats · Grid
+          // View Mode Options: Cards · List · Grid
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _viewModeTab('Detailed', ClassViewMode.detailed, CupertinoIcons.rectangle_grid_1x2, p),
-              SizedBox(width: 3.dp),
-              _viewModeTab('Stats', ClassViewMode.stats, CupertinoIcons.chart_bar_alt_fill, p),
-              SizedBox(width: 3.dp),
+              _viewModeTab('Cards', ClassViewMode.cards, CupertinoIcons.rectangle_grid_1x2, p),
+              SizedBox(width: 3.5.dp),
+              _viewModeTab('List', ClassViewMode.list, CupertinoIcons.list_bullet, p),
+              SizedBox(width: 3.5.dp),
               _viewModeTab('Grid', ClassViewMode.grid, CupertinoIcons.square_grid_2x2, p),
             ],
           ),
@@ -270,8 +270,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
           padding: EdgeInsets.symmetric(
-            horizontal: selected ? 8.dp : 6.dp,
-            vertical: 4.dp,
+            horizontal: selected ? 9.5.dp : 7.dp,
+            vertical: 5.5.dp,
           ),
           decoration: BoxDecoration(
             color: selected
@@ -286,7 +286,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Icon(
                 icon,
-                size: 13.dp,
+                size: 13.5.dp,
                 color: selected ? (p.dark ? Colors.white : p.accent) : p.sub,
               ),
               if (selected) ...[
@@ -318,7 +318,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(horizontal: 8.5.dp, vertical: 4.dp),
+        padding: EdgeInsets.symmetric(horizontal: 9.5.dp, vertical: 5.5.dp),
         decoration: BoxDecoration(
           color: selected
               ? (p.dark ? Colors.white.withValues(alpha: 0.14) : p.accent.withValues(alpha: 0.12))
@@ -386,7 +386,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ── Class List (Detailed, Stats, and Grid modes) ──
+  // ── Class List (Cards, List, and Grid modes) ──
   Widget _classList(
     BuildContext context,
     Pal p,
@@ -401,7 +401,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       100.dp,
     );
 
-    if (_viewMode == ClassViewMode.grid || (isWide && _viewMode != ClassViewMode.stats)) {
+    if (_viewMode == ClassViewMode.grid || (isWide && _viewMode != ClassViewMode.list)) {
       final gap = 10.dp;
       final room = math.min(MediaQuery.sizeOf(context).width, 1400.dp) -
           pad.horizontal;
@@ -437,7 +437,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
-    if (_viewMode == ClassViewMode.stats) {
+    if (_viewMode == ClassViewMode.list) {
       return Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 720.dp),
@@ -448,10 +448,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               final cls = filtered[i];
               final colorIndex = allClasses.indexOf(cls);
               return Padding(
-                padding: EdgeInsets.only(bottom: 10.dp),
+                padding: EdgeInsets.only(bottom: 8.dp),
                 child: EntranceIn(
                   index: i,
-                  child: _classCardStats(context, p, cls, colorIndex),
+                  child: _classCardList(context, p, cls, colorIndex),
                 ),
               );
             },
@@ -460,7 +460,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
-    // Default: Detailed list
+    // Default: Cards list
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 720.dp),
@@ -483,8 +483,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ── Stats Class Card (Score Analytics & Top Performer) ────────────
-  Widget _classCardStats(
+  // ── List View Class Row (Minimal, pristine iOS list item) ─────────
+  Widget _classCardList(
     BuildContext context,
     Pal p,
     ClassModel cls,
@@ -494,13 +494,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         AppTheme.classAvatarInfo(cls.name, cls.section, colorIndex);
     final accent = avatarInfo.accent;
     final students = cls.students;
-    final topStudent = students.isNotEmpty
-        ? students.reduce((a, b) => a.score > b.score ? a : b)
-        : null;
-    final totalScore = students.fold<int>(0, (s, st) => s + st.score);
 
     return Dismissible(
-      key: Key('stats-${cls.id}'),
+      key: Key('list-${cls.id}'),
       direction: DismissDirection.endToStart,
       confirmDismiss: (_) => _confirmDelete(context, cls.displayName),
       onDismissed: (_) {
@@ -508,12 +504,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       },
       background: Container(
         alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 22.dp),
+        padding: EdgeInsets.only(right: 20.dp),
         decoration: BoxDecoration(
           color: const Color(0xFFE5484D).withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(20.dp),
+          borderRadius: BorderRadius.circular(16.dp),
         ),
-        child: Icon(CupertinoIcons.trash, color: Colors.white, size: 22.dp),
+        child: Icon(CupertinoIcons.trash, color: Colors.white, size: 20.dp),
       ),
       child: GlassPress(
         onTap: () {
@@ -527,15 +523,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onLongPress: () => _showClassOptions(context, cls, colorIndex),
         label: cls.displayName,
         builder: (down) => GlassSurface(
-          radius: 20.dp,
+          radius: 16.dp,
           lit: down,
-          padding: EdgeInsets.fromLTRB(14.dp, 12.dp, 8.dp, 12.dp),
+          padding: EdgeInsets.symmetric(horizontal: 14.dp, vertical: 11.dp),
           child: Row(
             children: [
-              // Avatar with soft gradient & hairline rim
+              // Clean Avatar circle
               Container(
-                width: 44.dp,
-                height: 44.dp,
+                width: 32.dp,
+                height: 32.dp,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
@@ -550,167 +546,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: Colors.white.withValues(alpha: p.dark ? 0.20 : 0.35),
                     width: 0.8.dp,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accent.withValues(alpha: p.dark ? 0.16 : 0.10),
-                      blurRadius: 6.dp,
-                      offset: Offset(0, 1.5.dp),
-                    ),
-                  ],
                 ),
                 child: Center(
                   child: avatarInfo.icon != null
-                      ? Icon(avatarInfo.icon, size: 20.dp, color: Colors.white)
+                      ? Icon(avatarInfo.icon, size: 14.dp, color: Colors.white)
                       : Text(
                           avatarInfo.label ?? '',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 15.sp,
+                            fontSize: 11.5.sp,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                 ),
               ),
-              SizedBox(width: 13.dp),
-              // Class Name + Analytic Badges
+              SizedBox(width: 12.dp),
+              // Class Name + Section
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            cls.name,
-                            style: TextStyle(
-                              color: p.ink,
-                              fontSize: 16.5.sp,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    Flexible(
+                      child: Text(
+                        cls.name,
+                        style: TextStyle(
+                          color: p.ink,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.2,
                         ),
-                        if (cls.section != null && cls.section!.isNotEmpty) ...[
-                          SizedBox(width: 6.dp),
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 5.5.dp, vertical: 1.5.dp),
-                            decoration: BoxDecoration(
-                              color: accent.withValues(alpha: p.dark ? 0.20 : 0.10),
-                              borderRadius: BorderRadius.circular(6.dp),
-                            ),
-                            child: Text(
-                              cls.section!.length <= 2 ? 'Sec ${cls.section}' : cls.section!,
-                              style: TextStyle(
-                                color: accent,
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    SizedBox(height: 5.dp),
-                    // Stats Badges Row: Total Score Capsule + Top Student Capsule
-                    Row(
-                      children: [
-                        // Total Score Capsule
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6.dp, vertical: 2.dp),
-                          decoration: BoxDecoration(
-                            color: p.dark
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.black.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(6.dp),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                CupertinoIcons.chart_bar_fill,
-                                size: 10.dp,
-                                color: p.accent,
-                              ),
-                              SizedBox(width: 3.5.dp),
-                              Text(
-                                '${totalScore >= 0 ? "+$totalScore" : "$totalScore"} pts',
-                                style: TextStyle(
-                                  color: p.ink,
-                                  fontSize: 11.5.sp,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                    if (cls.section != null && cls.section!.isNotEmpty) ...[
+                      SizedBox(width: 6.dp),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 5.5.dp, vertical: 1.5.dp),
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: p.dark ? 0.20 : 0.10),
+                          borderRadius: BorderRadius.circular(6.dp),
+                        ),
+                        child: Text(
+                          cls.section!.length <= 2 ? 'Sec ${cls.section}' : cls.section!,
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        SizedBox(width: 6.dp),
-                        // Top Student or Count Capsule
-                        Flexible(
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6.dp, vertical: 2.dp),
-                            decoration: BoxDecoration(
-                              color: topStudent != null && topStudent.score > 0
-                                  ? (p.dark
-                                      ? const Color(0xFF059669).withValues(alpha: 0.18)
-                                      : const Color(0xFF10B981).withValues(alpha: 0.12))
-                                  : (p.dark
-                                      ? Colors.white.withValues(alpha: 0.08)
-                                      : Colors.black.withValues(alpha: 0.04)),
-                              borderRadius: BorderRadius.circular(6.dp),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  topStudent != null && topStudent.score > 0
-                                      ? CupertinoIcons.star_fill
-                                      : CupertinoIcons.person_2_fill,
-                                  size: 10.dp,
-                                  color: topStudent != null && topStudent.score > 0
-                                      ? (p.dark ? const Color(0xFF34D399) : const Color(0xFF059669))
-                                      : p.sub,
-                                ),
-                                SizedBox(width: 3.5.dp),
-                                Flexible(
-                                  child: Text(
-                                    topStudent != null && topStudent.score > 0
-                                        ? '${topStudent.name} (+${topStudent.score})'
-                                        : '${students.length} ${students.length == 1 ? "student" : "students"}',
-                                    style: TextStyle(
-                                      color: topStudent != null && topStudent.score > 0
-                                          ? (p.dark ? const Color(0xFF34D399) : const Color(0xFF059669))
-                                          : p.sub,
-                                      fontSize: 11.5.sp,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ],
                 ),
               ),
-              // Options menu
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => _showClassOptions(context, cls, colorIndex),
-                child: Padding(
-                  padding: EdgeInsets.all(8.dp),
-                  child: Icon(
-                    CupertinoIcons.ellipsis,
-                    size: 20.dp,
-                    color: p.sub,
-                  ),
+              // Student count badge
+              Text(
+                '${students.length} ${students.length == 1 ? "student" : "students"}',
+                style: TextStyle(
+                  color: p.sub,
+                  fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w500,
                 ),
+              ),
+              SizedBox(width: 8.dp),
+              // Subtle chevron forward
+              Icon(
+                CupertinoIcons.chevron_forward,
+                size: 14.dp,
+                color: p.sub.withValues(alpha: 0.6),
               ),
             ],
           ),
@@ -837,7 +740,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     : (topStudent.score < 0 ? 'top ${topStudent.score}' : 'top 0'),
                 style: TextStyle(
                   color: topStudent.score > 0
-                      ? (p.dark ? const Color(0xFF34D399) : const Color(0xFF059669))
+                      ? (p.dark ? const Color(0xFFFBBF24) : const Color(0xFFD97706))
                       : (topStudent.score < 0
                           ? (p.dark ? const Color(0xFFF87171) : const Color(0xFFDC2626))
                           : p.sub),
@@ -1000,8 +903,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 style: TextStyle(
                                   color: topStudent.score > 0
                                       ? (p.dark
-                                          ? const Color(0xFF34D399)
-                                          : const Color(0xFF059669))
+                                          ? const Color(0xFFFBBF24)
+                                          : const Color(0xFFD97706))
                                       : (topStudent.score < 0
                                           ? (p.dark
                                               ? const Color(0xFFF87171)

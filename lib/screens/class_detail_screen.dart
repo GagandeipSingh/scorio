@@ -366,7 +366,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
             values: _steps,
             labels: _steps.map((v) => '±$v').toList(),
             selected: _step,
-            height: 36.dp,
+            height: 44.dp,
             onChanged: (v) {
               HapticFeedback.selectionClick();
               setState(() => _step = v);
@@ -385,8 +385,8 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
             },
             label: 'Clear Filters',
             child: GlassSurface(
-              radius: 16.dp,
-              padding: EdgeInsets.symmetric(horizontal: 10.dp, vertical: 7.dp),
+              radius: 20.dp,
+              padding: EdgeInsets.symmetric(horizontal: 12.dp, vertical: 10.dp),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -394,14 +394,14 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                     _filterSummaryLabel(),
                     style: TextStyle(
                       color: p.accent,
-                      fontSize: 12.sp,
+                      fontSize: 12.5.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(width: 4.dp),
+                  SizedBox(width: 5.dp),
                   Icon(
                     CupertinoIcons.xmark,
-                    size: 11.dp,
+                    size: 12.dp,
                     color: p.accent,
                   ),
                 ],
@@ -439,7 +439,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
           gradient: p.accentFill,
           child: Center(
             child: Icon(
-              CupertinoIcons.person_add,
+              CupertinoIcons.person_badge_plus,
               color: Colors.white,
               size: 22.dp,
             ),
@@ -746,8 +746,8 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                               style: TextStyle(
                                 color: student.score > 0
                                     ? (p.dark
-                                        ? const Color(0xFF34D399)
-                                        : const Color(0xFF059669))
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFF047857))
                                     : (student.score < 0
                                         ? (p.dark
                                             ? const Color(0xFFF87171)

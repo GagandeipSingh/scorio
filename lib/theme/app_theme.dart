@@ -199,7 +199,7 @@ class AppTheme {
     Color(0xFF6366F1), // Indigo
     Color(0xFFEC4899), // Pink
     Color(0xFF14B8A6), // Teal
-    Color(0xFF84CC16), // Lime
+    Color(0xFF0284C7), // Sky Azure
     Color(0xFF64748B), // Slate Chalk
   ];
 
@@ -227,7 +227,7 @@ class AppTheme {
   }
 
   static Color scoreColor(int score, {bool dark = false}) {
-    if (score > 0) return dark ? const Color(0xFF34D399) : positive;
+    if (score > 0) return dark ? const Color(0xFF10B981) : const Color(0xFF047857);
     if (score < 0) return dark ? const Color(0xFFF87171) : negative;
     return dark ? darkTextSecondary : textSecondary;
   }
