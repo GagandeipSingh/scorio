@@ -39,14 +39,14 @@ class AppTheme {
   // Each class gets an instantly recognizable signature color:
   // 0: Royal Blue, 1: Warm Amber, 2: Vivid Violet, 3: Sunset Coral, 4: Lush Emerald, 5: Berry Rose, 6: Ocean Cyan, 7: Modern Slate
   static const List<List<Color>> _classPalette = [
-    [Color(0xFFEFF6FF), Color(0xFF2563EB)], // 0: Royal Blue
-    [Color(0xFFFFFBEB), Color(0xFFD97706)], // 1: Warm Amber / Gold
-    [Color(0xFFF5F3FF), Color(0xFF7C3AED)], // 2: Vivid Violet / Purple
-    [Color(0xFFFFF7ED), Color(0xFFEA580C)], // 3: Sunset Coral / Orange
-    [Color(0xFFECFDF5), Color(0xFF059669)], // 4: Lush Emerald Green
-    [Color(0xFFFFF1F2), Color(0xFFE11D48)], // 5: Berry Rose / Crimson
-    [Color(0xFFECFEFF), Color(0xFF0891B2)], // 6: Ocean Cyan / Teal
-    [Color(0xFFF8FAFC), Color(0xFF475569)], // 7: Modern Slate
+    [Color(0xFFEFF6FF), Color(0xFF3B82F6)], // 0: Apple Blue
+    [Color(0xFFFFFBEB), Color(0xFFD97706)], // 1: Warm Amber
+    [Color(0xFFF5F3FF), Color(0xFF8B5CF6)], // 2: Lavender Violet
+    [Color(0xFFFFF7ED), Color(0xFFF97316)], // 3: Soft Coral Orange
+    [Color(0xFFECFDF5), Color(0xFF10B981)], // 4: Mint Emerald
+    [Color(0xFFFFF1F2), Color(0xFFF43F5E)], // 5: Rose
+    [Color(0xFFECFEFF), Color(0xFF06B6D4)], // 6: Sky Teal
+    [Color(0xFFF8FAFC), Color(0xFF64748B)], // 7: Slate
   ];
 
   static Color classBg(int index, {bool dark = false}) {

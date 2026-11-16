@@ -578,13 +578,16 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
               mainAxisExtent: 74.dp,
             ),
             itemCount: students.length,
-            itemBuilder: (ctx, i) => _buildStudentCard(
-              ctx,
-              students[i],
-              cls,
+            itemBuilder: (ctx, i) => EntranceIn(
               index: i,
-              isTopScorer:
-                  topScore != null && students[i].score == topScore && topScore > 0,
+              child: _buildStudentCard(
+                ctx,
+                students[i],
+                cls,
+                index: i,
+                isTopScorer:
+                    topScore != null && students[i].score == topScore && topScore > 0,
+              ),
             ),
           ),
         ),
@@ -597,13 +600,16 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
         child: ListView.builder(
           padding: pad,
           itemCount: students.length,
-          itemBuilder: (ctx, i) => _buildStudentCard(
-            ctx,
-            students[i],
-            cls,
+          itemBuilder: (ctx, i) => EntranceIn(
             index: i,
-            isTopScorer:
-                topScore != null && students[i].score == topScore && topScore > 0,
+            child: _buildStudentCard(
+              ctx,
+              students[i],
+              cls,
+              index: i,
+              isTopScorer:
+                  topScore != null && students[i].score == topScore && topScore > 0,
+            ),
           ),
         ),
       ),
@@ -657,7 +663,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
             padding: EdgeInsets.fromLTRB(16.dp, 12.dp, 10.dp, 12.dp),
             child: Row(
               children: [
-                // Breeze-style circular vibrant gradient avatar with glowing shadow & white rim
+                // Softened circular pastel avatar with gentle ambient glow & hairline rim
                 Container(
                   width: 44.dp,
                   height: 44.dp,
@@ -667,20 +673,20 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Color.lerp(studentAccent, Colors.white, 0.16)!,
-                        Color.lerp(studentAccent, Colors.black, 0.10)!,
+                        Color.lerp(studentAccent, Colors.white, 0.22)!,
+                        Color.lerp(studentAccent, Colors.black, 0.04)!,
                       ],
                     ),
                     border: Border.all(
                       color:
-                          Colors.white.withValues(alpha: p.dark ? 0.25 : 0.40),
-                      width: 1.0,
+                          Colors.white.withValues(alpha: p.dark ? 0.20 : 0.35),
+                      width: 0.8.dp,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: studentAccent.withValues(alpha: 0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
+                        color: studentAccent.withValues(alpha: p.dark ? 0.16 : 0.10),
+                        blurRadius: 6.dp,
+                        offset: Offset(0, 1.5.dp),
                       ),
                     ],
                   ),
@@ -874,11 +880,15 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                             decoration: BoxDecoration(
                               gradient: p.accentFill,
                               shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: p.dark ? 0.20 : 0.40),
+                                width: 0.8.dp,
+                              ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: p.accent.withValues(alpha: 0.35),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
+                                  color: p.accent.withValues(alpha: p.dark ? 0.30 : 0.20),
+                                  blurRadius: 5.dp,
+                                  offset: Offset(0, 1.5.dp),
                                 ),
                               ],
                             ),

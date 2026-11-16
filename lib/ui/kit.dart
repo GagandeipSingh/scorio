@@ -22,13 +22,13 @@ class Pal {
   Color get faint => dark ? const Color(0x1FFFFFFF) : const Color(0x1A0F172A);
 
   LinearGradient get accentFill {
-    final a = dark ? 0.94 : 0.98;
+    final a = dark ? 0.92 : 0.96;
     return LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        const Color(0xFF38BDF8).withValues(alpha: a),
-        const Color(0xFF007AF8).withValues(alpha: a),
+        Color.lerp(accent, Colors.white, 0.05)!.withValues(alpha: a),
+        Color.lerp(accent, Colors.black, 0.04)!.withValues(alpha: a),
       ],
     );
   }

@@ -26,6 +26,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchCtrl = TextEditingController();
   String _query = '';
   bool _searchOpen = false;
+  int _filterMode = 0; // 0: All, 1: Top Scorers, 2: A-Z
 
   @override
   void dispose() {
@@ -50,13 +51,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
     final avgScore = scoredCount > 0 ? (totalScore / scoredCount).round() : 0;
 
-    final filtered = _query.isEmpty
+    var filtered = _query.isEmpty
         ? classes
         : classes
             .where((c) => c.displayName
                 .toLowerCase()
                 .contains(_query.toLowerCase()))
             .toList();
+
+    if (_filterMode == 1) {
+      filtered = List.of(filtered)
+        ..sort((a, b) {
+          final aTop = a.students.isEmpty
+              ? -9999
+              : a.students.map((s) => s.score).reduce(math.max);
+          final bTop = b.students.isEmpty
+              ? -9999
+              : b.students.map((s) => s.score).reduce(math.max);
+          return bTop.compareTo(aTop);
+        });
+    } else if (_filterMode == 2) {
+      filtered = List.of(filtered)
+        ..sort((a, b) => a.displayName.compareTo(b.displayName));
+    }
 
     return GlassScaffold(
       background: const GradientBackground(),
@@ -73,25 +90,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 SizedBox(
                   height: MediaQuery.paddingOf(context).top + 6.dp,
                 ),
+                // Header & Important Overview Section (Never unmounts, zero flash)
                 Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: 1400.dp),
-                    child: _searchOpen
-                        ? Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isWideLayout(context) ? 24.dp : 16.dp,
-                              vertical: 4.dp,
-                            ),
-                            child: SpringIn(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isWideLayout(context) ? 24.dp : 16.dp,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _header(p, classes),
+                          if (_searchOpen) ...[
+                            SizedBox(height: 8.dp),
+                            SpringIn(
                               key: const ValueKey('hdr-search'),
                               from: Offset(0, -10.dp),
                               child: _searchField(p),
                             ),
-                          )
-                        : _header(p, classes),
+                          ] else if (classes.isNotEmpty) ...[
+                            SizedBox(height: 10.dp),
+                            _overviewPulse(p, classes, totalStudents),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                SizedBox(height: 8.dp),
+                SizedBox(height: 10.dp),
                 Expanded(
                   child: classes.isEmpty
                       ? _empty(p)
@@ -101,7 +128,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ],
             ),
-            // Floating bottom dock & FAB (Breeze standard: springs into place, never flashes)
+            // Floating bottom dock & FAB
             if (!_searchOpen ||
                 MediaQuery.viewInsetsOf(context).bottom == 0)
               SpringIn(
@@ -120,123 +147,207 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ── Header ────────────────────────────────────────────────────────
+  // ── Header (Permanent, zero flash) ────────────────────────────────
   Widget _header(Pal p, List<ClassModel> classes) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.dp, vertical: 4.dp),
-      child: SizedBox(
-        height: 40.dp,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(width: 4.dp),
-            // App Brand Mark (Breeze style, bold)
-            Image.asset(
-              'assets/icon/mark.png',
-              height: 20.dp,
-              color: p.ink,
-              colorBlendMode: BlendMode.srcIn,
-              semanticLabel: 'Scorio',
-              errorBuilder: (context, error, stackTrace) => Icon(
-                CupertinoIcons.chart_bar_fill,
-                color: p.accent,
-                size: 20.dp,
+    return SizedBox(
+      height: 40.dp,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(width: 4.dp),
+          // App Brand Mark
+          Image.asset(
+            'assets/icon/mark.png',
+            height: 17.5.dp,
+            color: p.ink,
+            colorBlendMode: BlendMode.srcIn,
+            semanticLabel: 'Scorio',
+            errorBuilder: (context, error, stackTrace) => Icon(
+              CupertinoIcons.chart_bar_fill,
+              color: p.accent,
+              size: 17.5.dp,
+            ),
+          ),
+          SizedBox(width: 10.dp),
+          // Brand Title
+          Expanded(
+            child: Text(
+              'Scorio',
+              style: TextStyle(
+                color: p.ink,
+                fontSize: 21.sp,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
               ),
             ),
-            SizedBox(width: 10.dp),
-            // Brand Title (Bold Scorio)
-            Expanded(
-              child: Text(
-                'Scorio',
+          ),
+          // Search toggle button
+          RoundGlassButton(
+            icon: _searchOpen ? CupertinoIcons.xmark : CupertinoIcons.search,
+            size: 38.dp,
+            semanticLabel: _searchOpen ? 'Close search' : 'Search classes',
+            onPressed: () {
+              setState(() {
+                _searchOpen = !_searchOpen;
+                if (!_searchOpen) {
+                  _searchCtrl.clear();
+                  _query = '';
+                  FocusManager.instance.primaryFocus?.unfocus();
+                }
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Important Overview & Classroom Pulse (Above Class List) ───────
+  Widget _overviewPulse(Pal p, List<ClassModel> classes, int totalStudents) {
+
+    return GlassSurface(
+      radius: 18.dp,
+      padding: EdgeInsets.fromLTRB(14.dp, 10.dp, 14.dp, 10.dp),
+      child: Row(
+        children: [
+          // Stat: Active Classes
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                CupertinoIcons.rectangle_stack_fill,
+                size: 13.dp,
+                color: p.accent,
+              ),
+              SizedBox(width: 5.dp),
+              Text(
+                '${classes.length} ${classes.length == 1 ? "Class" : "Classes"}',
                 style: TextStyle(
                   color: p.ink,
-                  fontSize: 21.sp,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w600,
                   letterSpacing: -0.2,
                 ),
               ),
-            ),
-            // Top search button
-            RoundGlassButton(
-              icon: CupertinoIcons.search,
-              size: 38.dp,
-              semanticLabel: 'Search classes',
-              onPressed: () {
-                setState(() => _searchOpen = true);
-              },
-            ),
-          ],
+            ],
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10.dp),
+            child: Container(width: 1.dp, height: 12.dp, color: p.faint),
+          ),
+          // Stat: Students
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                CupertinoIcons.person_2_fill,
+                size: 13.dp,
+                color: const Color(0xFF10B981),
+              ),
+              SizedBox(width: 5.dp),
+              Text(
+                '$totalStudents Students',
+                style: TextStyle(
+                  color: p.ink,
+                  fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          // Filter Tabs: All · Top · A-Z
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _filterTab('All', 0, p),
+              SizedBox(width: 4.dp),
+              _filterTab('Top', 1, p),
+              SizedBox(width: 4.dp),
+              _filterTab('A-Z', 2, p),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterTab(String label, int mode, Pal p) {
+    final selected = _filterMode == mode;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _filterMode = mode);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(horizontal: 8.5.dp, vertical: 4.dp),
+        decoration: BoxDecoration(
+          color: selected
+              ? (p.dark ? Colors.white.withValues(alpha: 0.14) : p.accent.withValues(alpha: 0.12))
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10.dp),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? (p.dark ? Colors.white : p.accent) : p.sub,
+            fontSize: 11.5.sp,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          ),
         ),
       ),
     );
   }
 
-  // ── Search Field (Breeze pattern with clean cancel) ───────────────
+  // ── Search Field (Smooth inline dropdown, zero flash) ─────────────
   Widget _searchField(Pal p) {
     return SizedBox(
-      height: 44.dp,
-      child: Row(
-        children: [
-          Expanded(
-            child: GlassSurface(
-              radius: 22.dp,
-              thick: true,
-              padding: EdgeInsets.symmetric(horizontal: 14.dp),
-              child: Row(
-                children: [
-                  Icon(CupertinoIcons.search, size: 16.dp, color: p.sub),
-                  SizedBox(width: 8.dp),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchCtrl,
-                      autofocus: true,
-                      selectionWidthStyle: BoxWidthStyle.tight,
-                      magnifierConfiguration:
-                          TextMagnifierConfiguration.disabled,
-                      cursorColor: p.accent,
-                      textInputAction: TextInputAction.search,
-                      onChanged: (v) => setState(() => _query = v),
-                      style: TextStyle(color: p.ink, fontSize: 15.sp),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(vertical: 11.dp),
-                        border: InputBorder.none,
-                        hintText: 'Search classes…',
-                        hintStyle: TextStyle(color: p.sub, fontSize: 14.sp),
-                      ),
-                    ),
-                  ),
-                  if (_query.isNotEmpty)
-                    GestureDetector(
-                      onTap: () {
-                        _searchCtrl.clear();
-                        setState(() => _query = '');
-                      },
-                      child: Icon(
-                        CupertinoIcons.clear_circled_solid,
-                        color: p.sub,
-                        size: 16.dp,
-                      ),
-                    ),
-                ],
+      height: 42.dp,
+      child: GlassSurface(
+        radius: 21.dp,
+        thick: true,
+        padding: EdgeInsets.symmetric(horizontal: 14.dp),
+        child: Row(
+          children: [
+            Icon(CupertinoIcons.search, size: 16.dp, color: p.sub),
+            SizedBox(width: 8.dp),
+            Expanded(
+              child: TextField(
+                controller: _searchCtrl,
+                autofocus: true,
+                selectionWidthStyle: BoxWidthStyle.tight,
+                magnifierConfiguration: TextMagnifierConfiguration.disabled,
+                cursorColor: p.accent,
+                textInputAction: TextInputAction.search,
+                onChanged: (v) => setState(() => _query = v),
+                style: TextStyle(color: p.ink, fontSize: 15.sp),
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(vertical: 10.dp),
+                  border: InputBorder.none,
+                  hintText: 'Search classes…',
+                  hintStyle: TextStyle(color: p.sub, fontSize: 14.sp),
+                ),
               ),
             ),
-          ),
-          SizedBox(width: 8.dp),
-          RoundGlassButton(
-            icon: CupertinoIcons.xmark,
-            size: 38.dp,
-            semanticLabel: 'Close search',
-            onPressed: () {
-              _searchCtrl.clear();
-              FocusManager.instance.primaryFocus?.unfocus();
-              setState(() {
-                _searchOpen = false;
-                _query = '';
-              });
-            },
-          ),
-        ],
+            if (_query.isNotEmpty)
+              GestureDetector(
+                onTap: () {
+                  _searchCtrl.clear();
+                  setState(() => _query = '');
+                },
+                child: Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  color: p.sub,
+                  size: 16.dp,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -278,7 +389,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             itemBuilder: (ctx, i) {
               final cls = filtered[i];
               final colorIndex = allClasses.indexOf(cls);
-              return _classCard(context, p, cls, colorIndex);
+              return EntranceIn(
+                index: i,
+                child: _classCard(context, p, cls, colorIndex),
+              );
             },
           ),
         ),
@@ -296,7 +410,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             final colorIndex = allClasses.indexOf(cls);
             return Padding(
               padding: EdgeInsets.only(bottom: 10.dp),
-              child: _classCard(context, p, cls, colorIndex),
+              child: EntranceIn(
+                index: i,
+                child: _classCard(context, p, cls, colorIndex),
+              ),
             );
           },
         ),
@@ -357,7 +474,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Breeze-style circular vibrant gradient avatar with glowing shadow & white rim
+              // Softened circular pastel avatar with gentle ambient glow & hairline rim
               Container(
                 width: 44.dp,
                 height: 44.dp,
@@ -367,19 +484,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Color.lerp(accent, Colors.white, 0.16)!,
-                      Color.lerp(accent, Colors.black, 0.10)!,
+                      Color.lerp(accent, Colors.white, 0.22)!,
+                      Color.lerp(accent, Colors.black, 0.04)!,
                     ],
                   ),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: p.dark ? 0.25 : 0.40),
-                    width: 1.0,
+                    color: Colors.white.withValues(alpha: p.dark ? 0.20 : 0.35),
+                    width: 0.8.dp,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: accent.withValues(alpha: p.dark ? 0.35 : 0.25),
-                      blurRadius: 10.dp,
-                      offset: Offset(0, 3.dp),
+                      color: accent.withValues(alpha: p.dark ? 0.16 : 0.10),
+                      blurRadius: 6.dp,
+                      offset: Offset(0, 1.5.dp),
                     ),
                   ],
                 ),
@@ -444,18 +561,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               text:
                                   '${students.length} ${students.length == 1 ? "student" : "students"}',
                             ),
-                            if (topStudent != null && topStudent.score > 0) ...[
-                              TextSpan(text: '  ·  '),
-                              TextSpan(
-                                text: 'Top +${topStudent.score}',
-                                style: TextStyle(
-                                  color: p.dark
-                                      ? const Color(0xFF38BDF8)
-                                      : const Color(0xFF007AF8),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ] else if (avgScore != null) ...[
+                            if (avgScore != null) ...[
                               TextSpan(text: '  ·  '),
                               TextSpan(
                                 text: avgScore >= 0
@@ -485,7 +591,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
-              // Breeze-style three-dots menu
+              // Distinct Scorio Leader Capsule Badge
+              if (topStudent != null && topStudent.score > 0) ...[
+                SizedBox(width: 8.dp),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.5.dp, vertical: 4.dp),
+                  decoration: BoxDecoration(
+                    color: (p.dark ? const Color(0xFF3B82F6) : p.accent)
+                        .withValues(alpha: p.dark ? 0.16 : 0.08),
+                    borderRadius: BorderRadius.circular(10.dp),
+                    border: Border.all(
+                      color: (p.dark ? const Color(0xFF3B82F6) : p.accent)
+                          .withValues(alpha: p.dark ? 0.25 : 0.18),
+                      width: 0.8.dp,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.star_fill,
+                        size: 10.dp,
+                        color: p.dark ? const Color(0xFF60A5FA) : p.accent,
+                      ),
+                      SizedBox(width: 4.dp),
+                      Text(
+                        '+${topStudent.score}',
+                        style: TextStyle(
+                          color: p.dark ? const Color(0xFF60A5FA) : p.accent,
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              // Options menu
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => _showClassOptions(context, cls, colorIndex),

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/physics.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 class SpringCurve extends Curve {
@@ -158,3 +159,94 @@ class PressGlow extends InheritedWidget {
 
 bool isWideLayout(BuildContext context) =>
     MediaQuery.sizeOf(context).width >= 600;
+
+/// Smooth staggered spring-loaded entrance for list & grid cards.
+/// Cascades cards upwards with spring elasticity and graceful opacity fade.
+class EntranceIn extends StatefulWidget {
+  const EntranceIn({
+    super.key,
+    required this.index,
+    required this.child,
+    this.play = true,
+    this.offset = const Offset(0, 36),
+  });
+
+  final int index;
+  final Widget child;
+  final bool play;
+  final Offset offset;
+
+  @override
+  State<EntranceIn> createState() => _EntranceInState();
+}
+
+class _EntranceInState extends State<EntranceIn>
+    with SingleTickerProviderStateMixin {
+  static Stopwatch? _clock;
+  static const int _lead = 80;
+  static const int _each = 45;
+  static const int _run = 550;
+
+  Ticker? _ticker;
+  double _v = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.play) return;
+    _v = 0;
+    if (_clock == null) {
+      final sw = Stopwatch();
+      _clock = sw;
+      WidgetsBinding.instance.addPostFrameCallback((_) => sw.start());
+    }
+    _ticker = createTicker(_tick)..start();
+  }
+
+  void _tick(Duration _) {
+    final delay = _lead + _each * widget.index.clamp(0, 10);
+    final elapsed = _clock!.elapsedMilliseconds - delay;
+    final v = (elapsed / _run).clamp(0.0, 1.0);
+    if (v != _v) setState(() => _v = v);
+    if (v >= 1) _ticker?.stop();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_ticker != null && MediaQuery.disableAnimationsOf(context)) {
+      _ticker!.stop();
+      _v = 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_v >= 1 || MediaQuery.disableAnimationsOf(context)) {
+      return widget.child;
+    }
+    if (_v <= 0) {
+      return const SizedBox.shrink();
+    }
+    final t = kSpring.transform(_v);
+    final alpha = (_v * 2.2).clamp(0.0, 1.0);
+    final scale = 0.96 + 0.04 * t;
+
+    return Opacity(
+      opacity: alpha,
+      child: Transform.translate(
+        offset: widget.offset * (1 - t),
+        child: Transform.scale(
+          scale: scale,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}

@@ -88,23 +88,13 @@ class GlassSurface extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: shape,
         boxShadow: dark
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.50),
-                  blurRadius: 18,
-                  offset: const Offset(0, 5),
-                ),
-              ]
+            ? const []
             : [
                 BoxShadow(
-                  color: const Color(0xFF001030).withValues(alpha: 0.06),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-                BoxShadow(
-                  color: const Color(0xFF001030).withValues(alpha: 0.09),
+                  color: Colors.black.withValues(alpha: 0.035),
                   blurRadius: 22,
-                  offset: const Offset(0, 7),
+                  offset: const Offset(0, 2),
+                  blurStyle: BlurStyle.outer,
                 ),
               ],
       ),
@@ -149,35 +139,24 @@ class GlassSurface extends StatelessWidget {
 
   Widget _frost(bool dark, BorderRadius shape) {
     final fill = dark
-        ? (tint ?? const Color(0xFF1E2230)).withValues(
-            alpha: lit ? 0.45 : (thick ? 0.35 : 0.26),
+        ? (tint ?? const Color(0xFF222634)).withValues(
+            alpha: lit ? 0.36 : (thick ? 0.28 : 0.20),
           )
         : (tint ?? Colors.white).withValues(
-            alpha: lit ? 0.92 : (thick ? 0.82 : 0.72),
+            alpha: lit ? 0.80 : (thick ? 0.70 : 0.58),
           );
 
     final shadows = dark
-        ? [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: thick ? 18 : 12,
-              offset: const Offset(0, 3),
-            ),
-          ]
+        ? const <BoxShadow>[]
         : [
             BoxShadow(
-              color: const Color(0xFF001030).withValues(alpha: 0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 1.5),
-            ),
-            BoxShadow(
-              color: const Color(0xFF001030).withValues(alpha: 0.07),
-              blurRadius: thick ? 20 : 14,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: 0.07),
+              blurRadius: thick ? 18 : 12,
+              blurStyle: BlurStyle.outer,
             ),
           ];
 
-    final sigma = blur ?? (thick ? 14.0 : 12.0);
+    final sigma = blur ?? (thick ? 12.0 : 10.0);
 
     return DecoratedBox(
       decoration: BoxDecoration(borderRadius: shape, boxShadow: shadows),
@@ -482,46 +461,33 @@ class _FrostRim extends CustomPainter {
     final rect = Offset.zero & size;
     final r = math.min(radius, math.min(size.width, size.height) / 2);
     final rr = RRect.fromRectAndRadius(
-      rect.deflate(0.5),
-      Radius.circular(math.max(0, r - 0.5)),
+      rect.deflate(0.4),
+      Radius.circular(math.max(0, r - 0.4)),
     );
 
     final boost = lit ? 1.25 : 1.0;
+    double a(double light, double darkA, double custom) =>
+        ((dark ? darkA : light) * (hasCustomFill ? custom : 1.0) * boost).clamp(
+          0.0,
+          1.0,
+        );
 
-    final Shader shader;
-    if (dark) {
-      shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Colors.white.withValues(alpha: (0.35 * boost).clamp(0.0, 1.0)),
-          Colors.white.withValues(alpha: (0.16 * boost).clamp(0.0, 1.0)),
-          Colors.white.withValues(alpha: (0.08 * boost).clamp(0.0, 1.0)),
-        ],
-        stops: const [0.0, 0.40, 1.0],
-      ).createShader(rect);
-    } else {
-      // iOS Liquid Glass in light mode:
-      // Strong specular white at top, fading to a subtle ambient contrast rim at bottom
-      // so boundaries remain crisp against pale / white backgrounds.
-      shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Colors.white.withValues(alpha: (0.95 * boost).clamp(0.0, 1.0)),
-          Colors.white.withValues(alpha: (0.55 * boost).clamp(0.0, 1.0)),
-          Color.lerp(Colors.white, const Color(0xFF64748B), 0.35)!
-              .withValues(alpha: (0.42 * boost).clamp(0.0, 1.0)),
-        ],
-        stops: const [0.0, 0.30, 1.0],
-      ).createShader(rect);
-    }
+    final shader = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Colors.white.withValues(alpha: a(0.60, 0.22, 0.7)),
+        Colors.white.withValues(alpha: a(0.35, 0.12, 0.5)),
+        Colors.white.withValues(alpha: a(0.22, 0.08, 0.4)),
+      ],
+      stops: const [0.0, 0.35, 1.0],
+    ).createShader(rect);
 
     canvas.drawRRect(
       rr,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0
+        ..strokeWidth = 0.8
         ..shader = shader,
     );
   }

@@ -68,7 +68,7 @@ class _Sky extends CustomPainter {
       Paint()..color = _calm(sky.$2, dark),
     );
 
-    // Accent light wash from the top left (subtle, delicate ambient whisper)
+    // Accent light wash from the top left
     canvas.drawRect(
       rect,
       Paint()
@@ -76,21 +76,21 @@ class _Sky extends CustomPainter {
           begin: Alignment.topLeft,
           end: Alignment.center,
           colors: [
-            accent.withValues(alpha: dark ? 0.04 : 0.025),
+            accent.withValues(alpha: dark ? 0.06 : 0.05),
             accent.withValues(alpha: 0.0),
           ],
         ).createShader(rect),
     );
 
-    final rawSide =
-        math.sqrt(size.width * size.width + size.height * size.height);
-    final side = (rawSide / 120.0).ceil() * 120.0;
+    final side = math
+        .sqrt(size.width * size.width + size.height * size.height)
+        .ceilToDouble();
     final key = '$side|$dark';
     if (_topoKey != key) {
       _topo = _drawTopo(
         side,
         dark ? Colors.white : Colors.black,
-        dark ? 0.07 : 0.05,
+        dark ? 0.07 : 0.06,
       );
       _topoKey = key;
     }
@@ -164,8 +164,8 @@ class _Sky extends CustomPainter {
 Color _calm(Color c, bool dark) {
   final h = HSLColor.fromColor(c);
   return h
-      .withSaturation((h.saturation * (dark ? 0.35 : 0.45)).clamp(0.0, 1.0))
-      .withLightness(dark ? 0.06 : 0.975)
+      .withSaturation((h.saturation * (dark ? 0.35 : 0.50)).clamp(0.0, 1.0))
+      .withLightness(dark ? 0.055 : 0.970)
       .toColor();
 }
 
