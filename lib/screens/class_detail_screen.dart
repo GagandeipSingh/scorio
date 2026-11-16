@@ -651,7 +651,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
               crossAxisCount: columns,
               mainAxisSpacing: gap,
               crossAxisSpacing: gap,
-              mainAxisExtent: 74.dp,
+              mainAxisExtent: 82.dp,
             ),
             itemCount: students.length,
             itemBuilder: (ctx, i) => EntranceIn(

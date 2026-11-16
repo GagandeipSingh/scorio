@@ -419,7 +419,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               crossAxisCount: columns,
               mainAxisSpacing: gap,
               crossAxisSpacing: gap,
-              mainAxisExtent: _viewMode == ClassViewMode.grid ? 120.dp : 74.dp,
+              mainAxisExtent: _viewMode == ClassViewMode.grid ? 120.dp : 82.dp,
             ),
             itemCount: filtered.length,
             itemBuilder: (ctx, i) {
