@@ -13,7 +13,7 @@ class AppTheme {
   // Core palette — Classroom Chalkboard Green
   static const Color background = Color(0xFFF2F4F9);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color accent = Color(0xFF007AF8); // Electric Azure (App Icon Blue)
+  static const Color accent = Color(0xFF2589FE); // Lighter Radiant Sky Azure (App Icon Blue)
   static const Color accentBright = Color(0xFF38BDF8); // Radiant Sky Blue
   static const Color accentSoft = Color(0xFFEFF6FF); // Soft Ice Blue
   static const Color positive = Color(0xFF10B981); // Emerald
@@ -39,7 +39,7 @@ class AppTheme {
   // Each class gets an instantly recognizable signature color:
   // 0: Royal Blue, 1: Warm Amber, 2: Vivid Violet, 3: Sunset Coral, 4: Lush Emerald, 5: Berry Rose, 6: Ocean Cyan, 7: Modern Slate
   static const List<List<Color>> _classPalette = [
-    [Color(0xFFEFF6FF), Color(0xFF3B82F6)], // 0: Apple Blue
+    [Color(0xFFEFF6FF), Color(0xFF2E8BFF)], // 0: Apple Blue (Lighter Radiant Sky Azure)
     [Color(0xFFFFFBEB), Color(0xFFD97706)], // 1: Warm Amber
     [Color(0xFFF5F3FF), Color(0xFF8B5CF6)], // 2: Lavender Violet
     [Color(0xFFFFF7ED), Color(0xFFF97316)], // 3: Soft Coral Orange
@@ -189,7 +189,7 @@ class AppTheme {
 
   // Diverse, vibrant 12-color student avatar palette for clear individual recognition
   static const List<Color> studentPalette = [
-    Color(0xFF2563EB), // Royal Blue
+    Color(0xFF2E8BFF), // Radiant Azure
     Color(0xFFD97706), // Warm Amber
     Color(0xFF7C3AED), // Vivid Purple
     Color(0xFF059669), // Emerald

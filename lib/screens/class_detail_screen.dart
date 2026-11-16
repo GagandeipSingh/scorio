@@ -73,7 +73,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(height: top + 4.dp),
+                SizedBox(height: top + 10.dp),
                 Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: 1400.dp),
@@ -84,7 +84,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                           Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: isWideLayout(context) ? 24.dp : 16.dp,
-                              vertical: 2.dp,
+                              vertical: 4.dp,
                             ),
                             child: SpringIn(
                               key: const ValueKey('detail-search'),
@@ -99,9 +99,9 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                           Padding(
                             padding: EdgeInsets.fromLTRB(
                               isWideLayout(context) ? 24.dp : 16.dp,
-                              10.dp,
+                              12.dp,
                               isWideLayout(context) ? 24.dp : 16.dp,
-                              6.dp,
+                              8.dp,
                             ),
                             child: _controlsStrip(p),
                           ),
@@ -141,15 +141,15 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
   // ── Header ────────────────────────────────────────────────────────
   Widget _header(Pal p, ClassModel cls, String avgStr) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.dp, vertical: 2.dp),
+      padding: EdgeInsets.symmetric(horizontal: 16.dp, vertical: 4.dp),
       child: SizedBox(
-        height: 48.dp,
+        height: 52.dp,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             RoundGlassButton(
               icon: CupertinoIcons.chevron_back,
-              size: 40.dp,
+              size: 42.dp,
               onPressed: () => Navigator.pop(context),
               semanticLabel: 'Back',
             ),
@@ -163,7 +163,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                     cls.displayName,
                     style: TextStyle(
                       color: p.ink,
-                      fontSize: 18.sp,
+                      fontSize: 18.5.sp,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.3,
                     ),
@@ -185,7 +185,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
             SizedBox(width: 8.dp),
             // Floating tool capsule (Search, Filter, Class Options) - compact
             GlassSurface(
-              radius: 18.dp,
+              radius: 20.dp,
               thick: true,
               child: Row(
                 mainAxisSize: MainAxisSize.min,

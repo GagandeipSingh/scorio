@@ -27,8 +27,8 @@ class Pal {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        Color.lerp(accent, Colors.white, 0.05)!.withValues(alpha: a),
-        Color.lerp(accent, Colors.black, 0.04)!.withValues(alpha: a),
+        Color.lerp(accent, Colors.white, 0.12)!.withValues(alpha: a),
+        Color.lerp(accent, Colors.white, 0.02)!.withValues(alpha: a),
       ],
     );
   }
