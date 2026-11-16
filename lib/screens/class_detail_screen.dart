@@ -515,7 +515,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
           gradient: p.accentFill,
           child: Center(
             child: Icon(
-              CupertinoIcons.person_badge_plus,
+              Icons.person_add_rounded,
               color: Colors.white,
               size: 22.dp,
             ),
@@ -822,8 +822,8 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                               style: TextStyle(
                                 color: student.score > 0
                                     ? (p.dark
-                                        ? const Color(0xFFFBBF24)
-                                        : const Color(0xFFD97706))
+                                        ? const Color(0xFF60A5FA)
+                                        : p.accent)
                                     : (student.score < 0
                                         ? (p.dark
                                             ? const Color(0xFFF87171)
@@ -1180,27 +1180,57 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
     return GlassPress(
       onTap: onTap,
       label: label,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.dp, vertical: 8.dp),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(horizontal: 13.5.dp, vertical: 7.5.dp),
         decoration: BoxDecoration(
+          gradient: selected ? p.accentFill : null,
           color: selected
-              ? p.accent.withValues(alpha: p.dark ? 0.35 : 0.16)
+              ? null
               : (p.dark
-                  ? Colors.white.withValues(alpha: 0.06)
+                  ? Colors.white.withValues(alpha: 0.08)
                   : Colors.black.withValues(alpha: 0.04)),
-          borderRadius: BorderRadius.circular(12.dp),
+          borderRadius: BorderRadius.circular(20.dp),
           border: Border.all(
-            color: selected ? p.accent : Colors.transparent,
-            width: 1.2,
+            color: selected
+                ? Colors.white.withValues(alpha: 0.30)
+                : (p.dark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.07)),
+            width: 1.0,
           ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: p.accent.withValues(alpha: p.dark ? 0.40 : 0.28),
+                    blurRadius: 8.dp,
+                    offset: Offset(0, 2.dp),
+                  ),
+                ]
+              : null,
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? p.accent : p.sub,
-            fontSize: 13.5.sp,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected) ...[
+              Icon(
+                CupertinoIcons.checkmark_alt,
+                size: 13.dp,
+                color: Colors.white,
+              ),
+              SizedBox(width: 4.5.dp),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : p.ink,
+                fontSize: 13.5.sp,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                letterSpacing: -0.15,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1534,7 +1564,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                     child: Center(
                       child: Icon(
                         existing == null
-                            ? CupertinoIcons.person_badge_plus
+                            ? Icons.person_add_rounded
                             : CupertinoIcons.pencil,
                         color: p.accent,
                         size: 20.dp,

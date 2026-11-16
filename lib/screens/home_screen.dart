@@ -740,7 +740,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     : (topStudent.score < 0 ? 'Top ${topStudent.score}' : 'Top 0'),
                 style: TextStyle(
                   color: topStudent.score > 0
-                      ? (p.dark ? const Color(0xFFFBBF24) : const Color(0xFFD97706))
+                      ? (p.dark ? const Color(0xFF60A5FA) : p.accent)
                       : (topStudent.score < 0
                           ? (p.dark ? const Color(0xFFF87171) : const Color(0xFFDC2626))
                           : p.sub),
@@ -903,8 +903,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 style: TextStyle(
                                   color: topStudent.score > 0
                                       ? (p.dark
-                                          ? const Color(0xFFFBBF24)
-                                          : const Color(0xFFD97706))
+                                          ? const Color(0xFF60A5FA)
+                                          : p.accent)
                                       : (topStudent.score < 0
                                           ? (p.dark
                                               ? const Color(0xFFF87171)
