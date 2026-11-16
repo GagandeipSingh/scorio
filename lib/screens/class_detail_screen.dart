@@ -356,60 +356,136 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
     );
   }
 
-  // ── Controls Strip (Step Selector + Filter Pills) ─────────────────
+  // ── Controls Strip (Step Selector + Filter Pills - Identical Height & Roundness to Home Top Bar) ──
   Widget _controlsStrip(Pal p) {
-    return Row(
-      children: [
-        // Step selector (±1, ±5, ±10)
-        Expanded(
-          child: Segments<int>(
-            values: _steps,
-            labels: _steps.map((v) => '±$v').toList(),
-            selected: _step,
-            height: 44.dp,
-            onChanged: (v) {
-              HapticFeedback.selectionClick();
-              setState(() => _step = v);
-            },
+    return GlassSurface(
+      radius: 20.dp,
+      padding: EdgeInsets.symmetric(horizontal: 12.dp, vertical: 9.dp),
+      child: Row(
+        children: [
+          // Step selector tabs (±1, ±5, ±10 - same roundness as home top bar options)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < _steps.length; i++) ...[
+                if (i > 0) SizedBox(width: 4.dp),
+                _stepTab(_steps[i], p),
+              ],
+            ],
           ),
-        ),
-        if (_hasActiveFilters) ...[
-          SizedBox(width: 10.dp),
-          GlassPress(
-            onTap: () {
-              setState(() {
-                _sortBy = 'roll';
-                _sortAscending = true;
-                _scoreFilter = 'all';
-              });
-            },
-            label: 'Clear Filters',
-            child: GlassSurface(
-              radius: 20.dp,
-              padding: EdgeInsets.symmetric(horizontal: 12.dp, vertical: 10.dp),
+          const Spacer(),
+          // Vertical divider & Filter Status / Quick Action
+          if (_hasActiveFilters) ...[
+            Container(
+              width: 1.dp,
+              height: 16.dp,
+              color: p.faint,
+              margin: EdgeInsets.symmetric(horizontal: 5.dp),
+            ),
+            _clearFilterTab(p),
+          ] else ...[
+            GestureDetector(
+              onTap: () => _showFilterSheet(context),
+              behavior: HitTestBehavior.opaque,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    _filterSummaryLabel(),
-                    style: TextStyle(
-                      color: p.accent,
-                      fontSize: 12.5.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(width: 5.dp),
                   Icon(
-                    CupertinoIcons.xmark,
-                    size: 12.dp,
-                    color: p.accent,
+                    CupertinoIcons.slider_horizontal_3,
+                    size: 13.dp,
+                    color: p.sub,
+                  ),
+                  SizedBox(width: 4.dp),
+                  Text(
+                    _sortBy == 'score'
+                        ? 'By Score'
+                        : (_sortBy == 'name' ? 'By Name' : 'Roll Order'),
+                    style: TextStyle(
+                      color: p.sub,
+                      fontSize: 11.5.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ],
-      ],
+      ),
+    );
+  }
+
+  Widget _stepTab(int step, Pal p) {
+    final selected = _step == step;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _step = step);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(horizontal: 11.dp, vertical: 5.5.dp),
+        decoration: BoxDecoration(
+          color: selected
+              ? (p.dark
+                  ? Colors.white.withValues(alpha: 0.14)
+                  : p.accent.withValues(alpha: 0.12))
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10.dp),
+        ),
+        child: Text(
+          '±$step',
+          style: TextStyle(
+            color: selected ? (p.dark ? Colors.white : p.accent) : p.sub,
+            fontSize: 12.sp,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _clearFilterTab(Pal p) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _sortBy = 'roll';
+          _sortAscending = true;
+          _scoreFilter = 'all';
+        });
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(horizontal: 9.dp, vertical: 5.5.dp),
+        decoration: BoxDecoration(
+          color: p.accent.withValues(alpha: p.dark ? 0.20 : 0.12),
+          borderRadius: BorderRadius.circular(10.dp),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _filterSummaryLabel(),
+              style: TextStyle(
+                color: p.accent,
+                fontSize: 11.5.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(width: 4.dp),
+            Icon(
+              CupertinoIcons.xmark,
+              size: 11.dp,
+              color: p.accent,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -746,8 +822,8 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                               style: TextStyle(
                                 color: student.score > 0
                                     ? (p.dark
-                                        ? const Color(0xFF10B981)
-                                        : const Color(0xFF047857))
+                                        ? const Color(0xFFFBBF24)
+                                        : const Color(0xFFD97706))
                                     : (student.score < 0
                                         ? (p.dark
                                             ? const Color(0xFFF87171)

@@ -736,8 +736,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             if (topStudent != null)
               Text(
                 topStudent.score > 0
-                    ? 'top +${topStudent.score}'
-                    : (topStudent.score < 0 ? 'top ${topStudent.score}' : 'top 0'),
+                    ? 'Top +${topStudent.score}'
+                    : (topStudent.score < 0 ? 'Top ${topStudent.score}' : 'Top 0'),
                 style: TextStyle(
                   color: topStudent.score > 0
                       ? (p.dark ? const Color(0xFFFBBF24) : const Color(0xFFD97706))
@@ -896,10 +896,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               TextSpan(text: '  ·  '),
                               TextSpan(
                                 text: topStudent.score > 0
-                                    ? 'top +${topStudent.score}'
+                                    ? 'Top +${topStudent.score}'
                                     : (topStudent.score < 0
-                                        ? 'top ${topStudent.score}'
-                                        : 'top 0'),
+                                        ? 'Top ${topStudent.score}'
+                                        : 'Top 0'),
                                 style: TextStyle(
                                   color: topStudent.score > 0
                                       ? (p.dark

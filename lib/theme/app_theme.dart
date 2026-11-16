@@ -16,8 +16,8 @@ class AppTheme {
   static const Color accent = Color(0xFF2589FE); // Lighter Radiant Sky Azure (App Icon Blue)
   static const Color accentBright = Color(0xFF38BDF8); // Radiant Sky Blue
   static const Color accentSoft = Color(0xFFEFF6FF); // Soft Ice Blue
-  static const Color positive = Color(0xFF10B981); // Emerald
-  static const Color positiveSoft = Color(0xFFECFDF5);
+  static const Color positive = Color(0xFFD97706); // Warm Amber Gold
+  static const Color positiveSoft = Color(0xFFFEF3C7);
   static const Color negative = Color(0xFFEF4444); // Crimson
   static const Color negativeSoft = Color(0xFFFEF2F2);
   static const Color border = Color(0x1F001030);
@@ -227,7 +227,7 @@ class AppTheme {
   }
 
   static Color scoreColor(int score, {bool dark = false}) {
-    if (score > 0) return dark ? const Color(0xFF10B981) : const Color(0xFF047857);
+    if (score > 0) return dark ? const Color(0xFFFBBF24) : const Color(0xFFD97706);
     if (score < 0) return dark ? const Color(0xFFF87171) : negative;
     return dark ? darkTextSecondary : textSecondary;
   }
@@ -235,7 +235,7 @@ class AppTheme {
   static Color scoreBg(int score, {bool dark = false}) {
     if (score > 0) {
       return dark
-          ? const Color(0xFF064E3B).withValues(alpha: 0.4)
+          ? const Color(0xFF78350F).withValues(alpha: 0.35)
           : positiveSoft;
     }
     if (score < 0) {
