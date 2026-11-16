@@ -124,14 +124,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // App Brand Mark (Breeze style)
             Image.asset(
               'assets/icon/mark.png',
-              height: 18.dp,
+              height: 23.dp,
               color: p.ink,
               colorBlendMode: BlendMode.srcIn,
               semanticLabel: 'Scorio',
               errorBuilder: (context, error, stackTrace) => Icon(
                 CupertinoIcons.chart_bar_fill,
                 color: p.accent,
-                size: 18.dp,
+                size: 22.dp,
               ),
             ),
             SizedBox(width: 8.dp),
@@ -756,7 +756,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required VoidCallback onTap,
     bool danger = false,
   }) {
-    final color = danger ? const Color(0xFFE5484D) : p.ink;
+    final dangerColor =
+        p.dark ? const Color(0xFFFF5449) : const Color(0xFFE53935);
+    final color = danger ? dangerColor : p.ink;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
@@ -768,7 +770,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         padding: EdgeInsets.symmetric(horizontal: 10.dp),
         child: Row(
           children: [
-            Icon(icon, size: 20.dp, color: danger ? color : p.accent),
+            Container(
+              width: 36.dp,
+              height: 36.dp,
+              decoration: BoxDecoration(
+                color: danger
+                    ? dangerColor.withValues(alpha: p.dark ? 0.28 : 0.15)
+                    : p.accent.withValues(alpha: p.dark ? 0.18 : 0.10),
+                borderRadius: BorderRadius.circular(10.dp),
+                border: danger
+                    ? Border.all(
+                        color:
+                            dangerColor.withValues(alpha: p.dark ? 0.45 : 0.30),
+                        width: 0.8.dp,
+                      )
+                    : null,
+              ),
+              child: Center(
+                child: Icon(icon,
+                    size: 18.dp, color: danger ? dangerColor : p.accent),
+              ),
+            ),
             SizedBox(width: 14.dp),
             Expanded(
               child: Text(
@@ -776,11 +798,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 style: TextStyle(
                   color: color,
                   fontSize: 15.5.sp,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: danger ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
             ),
-            Icon(CupertinoIcons.chevron_forward, size: 15.dp, color: p.sub),
+            Icon(
+              CupertinoIcons.chevron_forward,
+              size: 15.dp,
+              color: danger ? dangerColor.withValues(alpha: 0.7) : p.sub,
+            ),
           ],
         ),
       ),
@@ -1044,20 +1070,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: GlassPress(
                     onTap: () => Navigator.pop(ctx, true),
                     label: 'Delete',
-                    child: SizedBox(
+                    child: Container(
                       height: 46.dp,
-                      child: GlassSurface(
-                        radius: 14.dp,
-                        thick: true,
-                        tint: const Color(0xFFE5484D),
-                        child: Center(
-                          child: Text(
-                            'Delete',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w700,
-                            ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            p.dark
+                                ? const Color(0xFFFF5449)
+                                : const Color(0xFFEF4444),
+                            p.dark
+                                ? const Color(0xFFD32F2F)
+                                : const Color(0xFFDC2626),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14.dp),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFEF4444)
+                                .withValues(alpha: p.dark ? 0.45 : 0.30),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),

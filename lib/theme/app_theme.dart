@@ -14,9 +14,9 @@ class AppTheme {
   // Core palette — Classroom Chalkboard Green
   static const Color background = Color(0xFFF2F4F9);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color accent = Color(0xFF10B981); // Classroom Chalkboard Emerald
-  static const Color accentBright = Color(0xFF34D399);
-  static const Color accentSoft = Color(0xFFECFDF5);
+  static const Color accent = Color(0xFF007AF8); // Electric Azure (App Icon Blue)
+  static const Color accentBright = Color(0xFF38BDF8); // Radiant Sky Blue
+  static const Color accentSoft = Color(0xFFEFF6FF); // Soft Ice Blue
   static const Color positive = Color(0xFF10B981); // Emerald
   static const Color positiveSoft = Color(0xFFECFDF5);
   static const Color negative = Color(0xFFEF4444); // Crimson

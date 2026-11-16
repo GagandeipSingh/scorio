@@ -1292,6 +1292,9 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
     bool danger = false,
   }) {
     final p = Pal.of(context);
+    final dangerColor =
+        p.dark ? const Color(0xFFFF5449) : const Color(0xFFE53935);
+    final effectiveColor = danger ? dangerColor : color;
 
     return GlassPress(
       onTap: onTap,
@@ -1304,11 +1307,20 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
               width: 36.dp,
               height: 36.dp,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: p.dark ? 0.22 : 0.12),
+                color: danger
+                    ? dangerColor.withValues(alpha: p.dark ? 0.28 : 0.15)
+                    : color.withValues(alpha: p.dark ? 0.22 : 0.12),
                 borderRadius: BorderRadius.circular(10.dp),
+                border: danger
+                    ? Border.all(
+                        color:
+                            dangerColor.withValues(alpha: p.dark ? 0.45 : 0.30),
+                        width: 0.8.dp,
+                      )
+                    : null,
               ),
               child: Center(
-                child: Icon(icon, color: color, size: 18.dp),
+                child: Icon(icon, color: effectiveColor, size: 18.dp),
               ),
             ),
             SizedBox(width: 14.dp),
@@ -1316,16 +1328,16 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
               child: Text(
                 title,
                 style: TextStyle(
-                  color: danger ? AppTheme.negative : p.ink,
+                  color: danger ? dangerColor : p.ink,
                   fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: danger ? FontWeight.w700 : FontWeight.w600,
                 ),
               ),
             ),
             Icon(
               CupertinoIcons.chevron_forward,
               size: 15.dp,
-              color: p.sub,
+              color: danger ? dangerColor.withValues(alpha: 0.7) : p.sub,
             ),
           ],
         ),
@@ -2040,20 +2052,38 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                       Navigator.pop(context);
                     },
                     label: 'Delete',
-                    child: SizedBox(
+                    child: Container(
                       height: 48.dp,
-                      child: GlassSurface(
-                        radius: 16.dp,
-                        thick: true,
-                        tint: AppTheme.negative,
-                        child: Center(
-                          child: Text(
-                            'Delete Class',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w700,
-                            ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            p.dark
+                                ? const Color(0xFFFF5449)
+                                : const Color(0xFFEF4444),
+                            p.dark
+                                ? const Color(0xFFD32F2F)
+                                : const Color(0xFFDC2626),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16.dp),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFEF4444)
+                                .withValues(alpha: p.dark ? 0.45 : 0.30),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Delete Class',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -2123,20 +2153,38 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                   child: GlassPress(
                     onTap: () => Navigator.pop(ctx, true),
                     label: 'Remove',
-                    child: SizedBox(
+                    child: Container(
                       height: 48.dp,
-                      child: GlassSurface(
-                        radius: 16.dp,
-                        thick: true,
-                        tint: AppTheme.negative,
-                        child: Center(
-                          child: Text(
-                            'Remove',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w700,
-                            ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            p.dark
+                                ? const Color(0xFFFF5449)
+                                : const Color(0xFFEF4444),
+                            p.dark
+                                ? const Color(0xFFD32F2F)
+                                : const Color(0xFFDC2626),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16.dp),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFEF4444)
+                                .withValues(alpha: p.dark ? 0.45 : 0.30),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Remove',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
