@@ -397,7 +397,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             if (topStudent != null && topStudent.score > 0) ...[
                               TextSpan(text: '  ·  '),
                               TextSpan(
-                                text: 'top +${topStudent.score}',
+                                text: 'Top +${topStudent.score}',
                                 style: TextStyle(
                                   color: p.dark
                                       ? const Color(0xFF38BDF8)
