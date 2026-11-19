@@ -53,7 +53,9 @@ class DatabaseHelper {
         classes = await db.query('classes');
         students = await db.query('students');
       } else {
-        await db.rawUpdate("UPDATE classes SET section = '' WHERE section = 'Lab'");
+        await db.rawUpdate(
+          "UPDATE classes SET section = '' WHERE section = 'Lab'",
+        );
       }
 
       return classes.map((c) {
@@ -165,8 +167,7 @@ class DatabaseHelper {
   Future<void> deleteClass(String classId) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn.delete('students',
-          where: 'class_id = ?', whereArgs: [classId]);
+      await txn.delete('students', where: 'class_id = ?', whereArgs: [classId]);
       await txn.delete('classes', where: 'id = ?', whereArgs: [classId]);
     });
   }
@@ -199,13 +200,21 @@ class DatabaseHelper {
 
   Future<void> updateScore(String studentId, int score) async {
     final db = await database;
-    await db.update('students', {'score': score},
-        where: 'id = ?', whereArgs: [studentId]);
+    await db.update(
+      'students',
+      {'score': score},
+      where: 'id = ?',
+      whereArgs: [studentId],
+    );
   }
 
   Future<void> resetScores(String classId) async {
     final db = await database;
-    await db.update('students', {'score': 0},
-        where: 'class_id = ?', whereArgs: [classId]);
+    await db.update(
+      'students',
+      {'score': 0},
+      where: 'class_id = ?',
+      whereArgs: [classId],
+    );
   }
 }

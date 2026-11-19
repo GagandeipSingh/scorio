@@ -5,8 +5,7 @@ import '../models/student_model.dart';
 
 final dbProvider = Provider<DatabaseHelper>((ref) => DatabaseHelper());
 
-final appProvider =
-    StateNotifierProvider<AppNotifier, List<ClassModel>>((ref) {
+final appProvider = StateNotifierProvider<AppNotifier, List<ClassModel>>((ref) {
   return AppNotifier(ref.watch(dbProvider));
 });
 
@@ -59,8 +58,9 @@ class AppNotifier extends StateNotifier<List<ClassModel>> {
     state = state.map((c) {
       if (c.id == classId) {
         return c.copyWith(
-          students:
-              c.students.map((s) => s.id == updated.id ? updated : s).toList(),
+          students: c.students
+              .map((s) => s.id == updated.id ? updated : s)
+              .toList(),
         );
       }
       return c;
@@ -79,8 +79,7 @@ class AppNotifier extends StateNotifier<List<ClassModel>> {
     }).toList();
   }
 
-  Future<void> updateScore(
-      String classId, String studentId, int delta) async {
+  Future<void> updateScore(String classId, String studentId, int delta) async {
     final cls = state.firstWhere((c) => c.id == classId);
     final student = cls.students.firstWhere((s) => s.id == studentId);
     final newScore = student.score + delta;
@@ -98,8 +97,7 @@ class AppNotifier extends StateNotifier<List<ClassModel>> {
     }).toList();
   }
 
-  Future<void> setScore(
-      String classId, String studentId, int score) async {
+  Future<void> setScore(String classId, String studentId, int score) async {
     await _db.updateScore(studentId, score);
     state = state.map((c) {
       if (c.id == classId) {

@@ -35,8 +35,8 @@ const int kSpringSoftMs = 520;
 
 Duration motion(BuildContext context, int ms) =>
     MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : Duration(milliseconds: ms);
+    ? Duration.zero
+    : Duration(milliseconds: ms);
 
 class SpringIn extends StatelessWidget {
   const SpringIn({
@@ -88,7 +88,7 @@ class SpringValue extends StatefulWidget {
   final double stiffness;
   final Widget? child;
   final Widget Function(BuildContext context, double value, Widget? child)
-      builder;
+  builder;
 
   @override
   State<SpringValue> createState() => _SpringValueState();
@@ -132,10 +132,10 @@ class _SpringValueState extends State<SpringValue>
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
-        animation: _c,
-        child: widget.child,
-        builder: (context, child) => widget.builder(context, _c.value, child),
-      );
+    animation: _c,
+    child: widget.child,
+    builder: (context, child) => widget.builder(context, _c.value, child),
+  );
 }
 
 class PressGlow extends InheritedWidget {
@@ -231,19 +231,15 @@ class _EntranceInState extends State<EntranceIn>
     if (_v >= 1 || MediaQuery.disableAnimationsOf(context)) {
       return widget.child;
     }
-    if (_v <= 0) {
-      return const SizedBox.shrink();
-    }
     final t = kSpring.transform(_v);
-    final alpha = (_v * 2.2).clamp(0.0, 1.0);
-    final scale = 0.96 + 0.04 * t;
-
+    // No fractional fade: hidden until its turn, then solid while it drops into place.
+    // Glass inside a fractional fade creates an offscreen saveLayer in Impeller,
+    // which samples an empty layer and flashes pure white.
     return Opacity(
-      opacity: alpha,
-      child: Transform.translate(
-        offset: widget.offset * (1 - t),
-        child: Transform.scale(
-          scale: scale,
+      opacity: _v > 0 ? 1 : 0,
+      child: ClipRect(
+        child: Transform.translate(
+          offset: widget.offset * (1 - t),
           child: widget.child,
         ),
       ),

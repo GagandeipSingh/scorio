@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
 import 'ui/glass_surface.dart' show GlassLens;
@@ -21,7 +22,8 @@ Future<void> main() async {
   );
 
   final view = WidgetsBinding.instance.platformDispatcher.views.firstOrNull;
-  final isLargeScreen = view != null &&
+  final isLargeScreen =
+      view != null &&
       view.physicalSize.shortestSide > 0 &&
       (view.physicalSize.shortestSide / view.devicePixelRatio) >= 600;
   if (!isLargeScreen) {
@@ -37,18 +39,18 @@ Future<void> main() async {
   runApp(const ProviderScope(child: ScoringApp()));
 }
 
-class ScoringApp extends StatelessWidget {
+class ScoringApp extends ConsumerWidget {
   const ScoringApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'Scorio',
       debugShowCheckedModeBanner: false,
       scrollBehavior: const _StillScroll(),
       theme: AppTheme.lightTheme(),
       darkTheme: AppTheme.darkTheme(),
-      themeMode: ThemeMode.system,
+      themeMode: ref.watch(themeModeProvider),
       builder: (context, child) {
         final mq = MediaQuery.of(context);
         return MediaQuery(
@@ -84,8 +86,7 @@ class _StillScroll extends MaterialScrollBehavior {
     BuildContext context,
     Widget child,
     ScrollableDetails details,
-  ) =>
-      child;
+  ) => child;
 }
 
 class _SubtleBounce extends BouncingScrollPhysics {

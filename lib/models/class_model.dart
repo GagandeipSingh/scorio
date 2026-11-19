@@ -41,17 +41,20 @@ class ClassModel {
     id: json['id'] as String,
     name: json['name'] as String,
     section: json['section'] as String?,
-    students: (json['students'] as List<dynamic>?)
+    students:
+        (json['students'] as List<dynamic>?)
             ?.map((s) => StudentModel.fromJson(s as Map<String, dynamic>))
             .toList() ??
         [],
   );
 
-  factory ClassModel.fromMap(Map<String, dynamic> map, List<StudentModel> students) =>
-      ClassModel(
-        id: map['id'] as String,
-        name: map['name'] as String,
-        section: map['section'] as String?,
-        students: students,
-      );
+  factory ClassModel.fromMap(
+    Map<String, dynamic> map,
+    List<StudentModel> students,
+  ) => ClassModel(
+    id: map['id'] as String,
+    name: map['name'] as String,
+    section: map['section'] as String?,
+    students: students,
+  );
 }

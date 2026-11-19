@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^2.6.1
   sqflite: ^2.4.2
+  shared_preferences: ^2.5.6
   path: ^1.9.0
   google_fonts: ^6.2.1
   flutter_screenutil: ^5.9.3
@@ -138,12 +139,16 @@ flutter_launcher_icons:
     generate: false
 
 flutter_native_splash:
-  color: "#ffffff"
-  image: assets/white_bg.png
+  color: "#F2F4F9"
+  color_dark: "#070A12"
+  image: assets/splash_light.png
+  image_dark: assets/splash_dark.png
   android: true
   ios: true
   android_gravity: center
   ios_content_mode: scaleAspectFit
   android_12:
-    image: assets/white_bg.png
-    icon_background_color: "#ffffff"
+    image: assets/splash_light.png
+    image_dark: assets/splash_dark.png
+    icon_background_color: "#F2F4F9"
+    icon_background_color_dark: "#070A12"

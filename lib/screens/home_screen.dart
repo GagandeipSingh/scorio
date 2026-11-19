@@ -6,7 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/class_model.dart';
+import '../models/student_model.dart';
 import '../providers/app_provider.dart';
+import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../ui/glass_chrome.dart';
 import '../ui/glass_surface.dart';
@@ -15,11 +17,7 @@ import '../ui/motion.dart';
 import '../ui/scale.dart';
 import 'class_detail_screen.dart';
 
-enum ClassViewMode {
-  cards,
-  list,
-  grid,
-}
+enum ClassViewMode { cards, list, grid }
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -33,7 +31,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _query = '';
   bool _searchOpen = false;
   int _filterMode = 0; // 0: All, 1: Top Scorers, 2: A-Z
-  ClassViewMode _viewMode = ClassViewMode.cards;
+  ClassViewMode? _userSelectedViewMode;
+  bool _introPlayed = false;
+  bool? _lastGrid;
+  DateTime? _swappedAt;
+
+  ClassViewMode _resolvedViewMode(BuildContext context) {
+    if (_userSelectedViewMode != null) return _userSelectedViewMode!;
+    return isWideLayout(context) ? ClassViewMode.grid : ClassViewMode.cards;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _introPlayed = true);
+    });
+  }
 
   @override
   void dispose() {
@@ -61,10 +75,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     var filtered = _query.isEmpty
         ? classes
         : classes
-            .where((c) => c.displayName
-                .toLowerCase()
-                .contains(_query.toLowerCase()))
-            .toList();
+              .where(
+                (c) =>
+                    c.displayName.toLowerCase().contains(_query.toLowerCase()),
+              )
+              .toList();
 
     if (_filterMode == 1) {
       filtered = List.of(filtered)
@@ -84,8 +99,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return GlassScaffold(
       background: const GradientBackground(),
-      statusBarStyle:
-          p.dark ? GlassStatusBarStyle.light : GlassStatusBarStyle.dark,
+      statusBarStyle: p.dark
+          ? GlassStatusBarStyle.light
+          : GlassStatusBarStyle.dark,
       body: Listener(
         onPointerDown: (_) {
           FocusManager.instance.primaryFocus?.unfocus();
@@ -94,13 +110,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             Column(
               children: [
-                SizedBox(
-                  height: MediaQuery.paddingOf(context).top + 10.dp,
-                ),
+                SizedBox(height: MediaQuery.paddingOf(context).top + 2.dp),
                 // Header & Important Overview Section (Never unmounts, zero flash)
                 Center(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 1400.dp),
+                    constraints: BoxConstraints(maxWidth: 1040.dp),
                     child: Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: isWideLayout(context) ? 24.dp : 16.dp,
@@ -108,15 +122,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _header(p, classes),
-                          if (_searchOpen) ...[
-                            SizedBox(height: 10.dp),
+                          if (!isWideLayout(context) && _searchOpen) ...[
+                            // On mobile: search container & cross replaces header in place
                             SpringIn(
-                              key: const ValueKey('hdr-search'),
-                              from: Offset(0, -10.dp),
+                              key: const ValueKey('hdr-search-mobile'),
+                              from: Offset(0, -6.dp),
                               child: _searchField(p),
                             ),
-                          ] else if (classes.isNotEmpty) ...[
+                          ] else ...[
+                            // Header (on wide screens / tab mode / Moto Connect: search opens IN PLACE)
+                            _header(p, classes),
+                          ],
+                          if (!isWideLayout(context) &&
+                              classes.isNotEmpty &&
+                              !_searchOpen) ...[
                             SizedBox(height: 12.dp),
                             _overviewControlBar(p),
                           ],
@@ -130,23 +149,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: classes.isEmpty
                       ? _empty(p)
                       : filtered.isEmpty
-                          ? _noResults(p)
-                          : _classList(context, p, filtered, classes),
+                      ? _noResults(p)
+                      : _classList(context, p, filtered, classes),
                 ),
               ],
             ),
-            // Floating bottom dock & FAB
-            if (!_searchOpen ||
-                MediaQuery.viewInsetsOf(context).bottom == 0)
+            // Floating bottom dock & FAB (Prism/Breeze style, responsive on fold, tab & mobile)
+            if (classes.isNotEmpty &&
+                (!_searchOpen || MediaQuery.viewInsetsOf(context).bottom == 0))
               SpringIn(
                 key: const ValueKey('dock-bar'),
                 from: Offset(0, 90.dp),
-                child: Stack(
-                  children: [
-                    _bottomBar(p, classes.length, totalStudents, avgScore),
-                    _fab(p),
-                  ],
-                ),
+                child: isWideLayout(context)
+                    ? _desktopDock(p, classes.length, totalStudents)
+                    : Stack(
+                        children: [
+                          _bottomBar(
+                            p,
+                            classes.length,
+                            totalStudents,
+                            avgScore,
+                          ),
+                          _fab(p),
+                        ],
+                      ),
               ),
           ],
         ),
@@ -156,54 +182,81 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // ── Header (Permanent, zero flash) ────────────────────────────────
   Widget _header(Pal p, List<ClassModel> classes) {
+    final isWide = isWideLayout(context);
     return SizedBox(
-      height: 46.dp,
+      height: 52.dp,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(width: 4.dp),
-          // App Brand Mark
+          // App Brand Mark (slightly smaller, elegant footprint)
           Image.asset(
             'assets/icon/mark.png',
-            height: 18.5.dp,
+            height: 15.5.dp,
             color: p.ink,
             colorBlendMode: BlendMode.srcIn,
             semanticLabel: 'Scorio',
             errorBuilder: (context, error, stackTrace) => Icon(
               CupertinoIcons.chart_bar_fill,
               color: p.accent,
-              size: 18.5.dp,
+              size: 15.5.dp,
             ),
           ),
-          SizedBox(width: 10.dp),
-          // Brand Title
-          Expanded(
-            child: Text(
-              'Scorio',
-              style: TextStyle(
+          SizedBox(width: 8.dp),
+          // Brand Title (slightly less bold & slightly smaller font)
+          Text(
+            'Scorio',
+            style: TextStyle(
+              color: p.ink,
+              fontSize: 19.sp,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const Spacer(),
+          if (isWide && classes.isNotEmpty) ...[
+            _overviewControlBar(p),
+            SizedBox(width: 10.dp),
+          ],
+          // Appearance: follow the phone, or always light / dark.
+          if (!_searchOpen) ...[
+            RoundGlassButton(
+              size: 38.dp,
+              semanticLabel: 'Appearance',
+              onPressed: () => _showAppearanceSheet(context),
+              child: Icon(
+                _themeIcon(ref.watch(themeModeProvider)),
+                size: 16.dp,
                 color: p.ink,
-                fontSize: 22.sp,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.2,
               ),
             ),
-          ),
-          // Search toggle button
-          RoundGlassButton(
-            icon: _searchOpen ? CupertinoIcons.xmark : CupertinoIcons.search,
-            size: 40.dp,
-            semanticLabel: _searchOpen ? 'Close search' : 'Search classes',
-            onPressed: () {
-              setState(() {
-                _searchOpen = !_searchOpen;
-                if (!_searchOpen) {
-                  _searchCtrl.clear();
-                  _query = '';
-                  FocusManager.instance.primaryFocus?.unfocus();
-                }
-              });
-            },
-          ),
+            SizedBox(width: 8.dp),
+          ],
+          // On wide screens (tab mode / Moto Connect / Fold / Desktop), search opens AT PLACE in header row!
+          if (isWide && _searchOpen)
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 320.dp),
+              child: SpringIn(
+                key: const ValueKey('hdr-search-inplace'),
+                from: Offset(10.dp, 0),
+                child: _searchField(p),
+              ),
+            )
+          else if (!_searchOpen)
+            RoundGlassButton(
+              size: 38.dp,
+              semanticLabel: 'Search classes',
+              onPressed: () {
+                setState(() => _searchOpen = true);
+              },
+              child: isWide
+                  ? Icon(CupertinoIcons.search, size: 15.5.dp, color: p.ink)
+                  : SemiboldIcon(
+                      CupertinoIcons.search,
+                      size: 15.5.dp,
+                      color: p.ink,
+                    ),
+            ),
         ],
       ),
     );
@@ -211,64 +264,85 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // ── Classroom View Controls & Filter Bar (Above Class List) ──────
   Widget _overviewControlBar(Pal p) {
-    return GlassSurface(
-      radius: 20.dp,
-      padding: EdgeInsets.symmetric(horizontal: 12.dp, vertical: 9.dp),
-      child: Row(
-        children: [
-          // Sort Tabs: All · Top · A-Z
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _filterTab('All', 0, p),
-              SizedBox(width: 4.dp),
-              _filterTab('Top', 1, p),
-              SizedBox(width: 4.dp),
-              _filterTab('A-Z', 2, p),
-            ],
-          ),
-          const Spacer(),
-          // Vertical divider
-          Container(
-            width: 1.dp,
-            height: 16.dp,
-            color: p.faint,
-            margin: EdgeInsets.symmetric(horizontal: 5.dp),
-          ),
-          // View Mode Options: Cards · List · Grid
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _viewModeTab('Cards', ClassViewMode.cards, CupertinoIcons.rectangle_grid_1x2, p),
-              SizedBox(width: 3.5.dp),
-              _viewModeTab('List', ClassViewMode.list, CupertinoIcons.list_bullet, p),
-              SizedBox(width: 3.5.dp),
-              _viewModeTab('Grid', ClassViewMode.grid, CupertinoIcons.square_grid_2x2, p),
-            ],
-          ),
-        ],
+    final isWide = isWideLayout(context);
+    return SizedBox(
+      height: 44.dp,
+      child: GlassSurface(
+        radius: 22.dp,
+        card: true,
+        padding: EdgeInsets.symmetric(
+          horizontal: isWide ? 10.dp : 12.dp,
+          vertical: 4.dp,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Sort Tabs: All · Top · A-Z
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _filterTab('All', 0, p),
+                SizedBox(width: 4.dp),
+                _filterTab('Top', 1, p),
+                SizedBox(width: 4.dp),
+                _filterTab('A-Z', 2, p),
+              ],
+            ),
+            if (!isWide) const Spacer() else SizedBox(width: 8.dp),
+            // Vertical divider
+            Container(
+              width: 1.dp,
+              height: 16.dp,
+              color: p.faint,
+              margin: EdgeInsets.symmetric(horizontal: 5.dp),
+            ),
+            if (isWide) SizedBox(width: 4.dp),
+            // View Mode Options: Cards · List · Grid
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _viewModeTab(
+                  'Cards',
+                  ClassViewMode.cards,
+                  CupertinoIcons.rectangle_grid_1x2,
+                  p,
+                ),
+                SizedBox(width: 3.5.dp),
+                _viewModeTab(
+                  'List',
+                  ClassViewMode.list,
+                  CupertinoIcons.list_bullet,
+                  p,
+                ),
+                SizedBox(width: 3.5.dp),
+                _viewModeTab(
+                  'Grid',
+                  ClassViewMode.grid,
+                  CupertinoIcons.square_grid_2x2,
+                  p,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _viewModeTab(
-    String label,
-    ClassViewMode mode,
-    IconData icon,
-    Pal p,
-  ) {
-    final selected = _viewMode == mode;
+  Widget _viewModeTab(String label, ClassViewMode mode, IconData icon, Pal p) {
+    final selected = _resolvedViewMode(context) == mode;
     return Tooltip(
       message: label,
       child: GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
-          setState(() => _viewMode = mode);
+          setState(() => _userSelectedViewMode = mode);
         },
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
+          duration: const Duration(milliseconds: 240),
+          curve: kSpringSoft,
           padding: EdgeInsets.symmetric(
             horizontal: selected ? 9.5.dp : 7.dp,
             vertical: 5.5.dp,
@@ -276,8 +350,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           decoration: BoxDecoration(
             color: selected
                 ? (p.dark
-                    ? Colors.white.withValues(alpha: 0.14)
-                    : p.accent.withValues(alpha: 0.12))
+                      ? Colors.white.withValues(alpha: 0.14)
+                      : p.accent.withValues(alpha: 0.12))
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(10.dp),
           ),
@@ -316,12 +390,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 240),
+        curve: kSpringSoft,
         padding: EdgeInsets.symmetric(horizontal: 9.5.dp, vertical: 5.5.dp),
         decoration: BoxDecoration(
           color: selected
-              ? (p.dark ? Colors.white.withValues(alpha: 0.14) : p.accent.withValues(alpha: 0.12))
+              ? (p.dark
+                    ? Colors.white.withValues(alpha: 0.14)
+                    : p.accent.withValues(alpha: 0.12))
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10.dp),
         ),
@@ -337,166 +413,280 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ── Search Field (Smooth inline dropdown, zero flash) ─────────────
+  // ── Search Field (Vertically centered hint, compact footprint, smaller icons) ─
   Widget _searchField(Pal p) {
     return SizedBox(
-      height: 42.dp,
-      child: GlassSurface(
-        radius: 21.dp,
-        thick: true,
-        padding: EdgeInsets.symmetric(horizontal: 14.dp),
-        child: Row(
-          children: [
-            Icon(CupertinoIcons.search, size: 16.dp, color: p.sub),
-            SizedBox(width: 8.dp),
-            Expanded(
-              child: TextField(
-                controller: _searchCtrl,
-                autofocus: true,
-                selectionWidthStyle: BoxWidthStyle.tight,
-                magnifierConfiguration: TextMagnifierConfiguration.disabled,
-                cursorColor: p.accent,
-                textInputAction: TextInputAction.search,
-                onChanged: (v) => setState(() => _query = v),
-                style: TextStyle(color: p.ink, fontSize: 15.sp),
-                decoration: InputDecoration(
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10.dp),
-                  border: InputBorder.none,
-                  hintText: 'Search classes…',
-                  hintStyle: TextStyle(color: p.sub, fontSize: 14.sp),
-                ),
+      height: 40.dp,
+      child: Row(
+        children: [
+          Expanded(
+            child: GlassSurface(
+              radius: 20.dp,
+              thick: true,
+              card: true,
+              padding: EdgeInsets.symmetric(horizontal: 13.dp),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.search,
+                    size: 15.dp,
+                    color: p.ink.withValues(alpha: 0.82),
+                  ),
+                  SizedBox(width: 8.dp),
+                  Expanded(
+                    child: Center(
+                      child: TextField(
+                        controller: _searchCtrl,
+                        autofocus: true,
+                        textAlignVertical: TextAlignVertical.center,
+                        selectionWidthStyle: BoxWidthStyle.tight,
+                        magnifierConfiguration:
+                            TextMagnifierConfiguration.disabled,
+                        cursorColor: p.accent,
+                        textInputAction: TextInputAction.search,
+                        onChanged: (v) => setState(() => _query = v),
+                        style: TextStyle(
+                          color: p.ink,
+                          fontSize: 14.sp,
+                          height: 1.15,
+                        ),
+                        decoration: InputDecoration(
+                          isCollapsed: true,
+                          contentPadding: EdgeInsets.zero,
+                          border: InputBorder.none,
+                          hintText: 'Search classes…',
+                          hintStyle: TextStyle(
+                            color: p.sub,
+                            fontSize: 14.sp,
+                            height: 1.15,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_query.isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        _searchCtrl.clear();
+                        setState(() => _query = '');
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 4.dp),
+                        child: Icon(
+                          CupertinoIcons.clear_circled_solid,
+                          color: p.sub,
+                          size: 14.dp,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-            if (_query.isNotEmpty)
-              GestureDetector(
-                onTap: () {
-                  _searchCtrl.clear();
-                  setState(() => _query = '');
-                },
-                child: Icon(
-                  CupertinoIcons.clear_circled_solid,
-                  color: p.sub,
-                  size: 16.dp,
-                ),
-              ),
-          ],
-        ),
+          ),
+          SizedBox(width: 8.dp),
+          RoundGlassButton(
+            icon: CupertinoIcons.xmark,
+            size: 38.dp,
+            iconSize: 13.5.dp,
+            semanticLabel: 'Close search',
+            onPressed: () {
+              _searchCtrl.clear();
+              FocusManager.instance.primaryFocus?.unfocus();
+              setState(() {
+                _searchOpen = false;
+                _query = '';
+              });
+            },
+          ),
+        ],
       ),
     );
   }
 
-  // ── Class List (Cards, List, and Grid modes) ──
+  // ── Class List (Cards, List, and Grid modes with Breeze-style morph) ──
   Widget _classList(
     BuildContext context,
     Pal p,
     List<ClassModel> filtered,
     List<ClassModel> allClasses,
   ) {
+    final viewMode = _resolvedViewMode(context);
     final isWide = isWideLayout(context);
     final pad = EdgeInsets.fromLTRB(
       isWide ? 24.dp : 16.dp,
       4.dp,
       isWide ? 24.dp : 16.dp,
-      100.dp,
+      MediaQuery.paddingOf(context).bottom +
+          104.dp +
+          (_searchOpen ? MediaQuery.viewInsetsOf(context).bottom : 0),
     );
 
-    if (_viewMode == ClassViewMode.grid || (isWide && _viewMode != ClassViewMode.list)) {
-      final gap = 10.dp;
-      final room = math.min(MediaQuery.sizeOf(context).width, 1400.dp) -
-          pad.horizontal;
-      final minColumn = _viewMode == ClassViewMode.grid ? 150.0 : 360.0;
-      final columns = isWide
-          ? ((room + gap) / (minColumn + gap)).floor().clamp(1, 4)
-          : 2;
+    final isGrid = viewMode == ClassViewMode.grid;
+    if (_lastGrid != null && _lastGrid != isGrid) _swappedAt = DateTime.now();
+    _lastGrid = isGrid;
+    final swapped =
+        _swappedAt != null &&
+        DateTime.now().difference(_swappedAt!) <
+            const Duration(milliseconds: 600);
 
-      return Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 1400.dp),
-          child: GridView.builder(
-            padding: pad,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns,
-              mainAxisSpacing: gap,
-              crossAxisSpacing: gap,
-              mainAxisExtent: _viewMode == ClassViewMode.grid ? 120.dp : 82.dp,
-            ),
-            itemCount: filtered.length,
-            itemBuilder: (ctx, i) {
-              final cls = filtered[i];
-              final colorIndex = allClasses.indexOf(cls);
-              return EntranceIn(
-                index: i,
-                child: _viewMode == ClassViewMode.grid
-                    ? _classCardGrid(context, p, cls, colorIndex)
-                    : _classCard(context, p, cls, colorIndex),
-              );
-            },
-          ),
-        ),
-      );
-    }
+    Widget content;
+    if (isGrid) {
+      final gap = 12.dp;
 
-    if (_viewMode == ClassViewMode.list) {
-      return Center(
+      content = Center(
+        key: const ValueKey('grid-view'),
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 720.dp),
-          child: ListView.builder(
-            padding: pad,
-            itemCount: filtered.length,
-            itemBuilder: (ctx, i) {
-              final cls = filtered[i];
-              final colorIndex = allClasses.indexOf(cls);
-              return Padding(
-                padding: EdgeInsets.only(bottom: 8.dp),
-                child: EntranceIn(
-                  index: i,
-                  child: _classCardList(context, p, cls, colorIndex),
+          constraints: BoxConstraints(maxWidth: 1200.dp),
+          child: LayoutBuilder(
+            builder: (context, box) {
+              // Two columns on a phone, three on a fold or desktop, matching
+              // the student grid inside a class.
+              final columns = (box.maxWidth / 340.dp).floor().clamp(2, 3);
+              return GridView.builder(
+                padding: pad,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  mainAxisSpacing: gap,
+                  crossAxisSpacing: gap,
+                  mainAxisExtent: 112.dp,
                 ),
+                itemCount: filtered.length,
+                itemBuilder: (ctx, i) {
+                  final cls = filtered[i];
+                  final colorIndex = allClasses.indexOf(cls);
+                  return KeyedSubtree(
+                    key: ValueKey('class-grid-${cls.id}'),
+                    child: _SwapIn(
+                      index: i,
+                      play: swapped,
+                      child: EntranceIn(
+                        index: i,
+                        play: !_introPlayed && !_searchOpen,
+                        child: _classCardGrid(context, p, cls, colorIndex),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),
         ),
       );
+    } else {
+      final isList = viewMode == ClassViewMode.list;
+      if (isWide) {
+        final gap = 12.dp;
+        const columns = 2;
+
+        content = Center(
+          key: ValueKey('wide-morph-view-$isList'),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 1040.dp),
+            child: GridView.builder(
+              padding: pad,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                mainAxisSpacing: gap,
+                crossAxisSpacing: gap,
+                mainAxisExtent: isList ? 58.dp : 88.dp,
+              ),
+              itemCount: filtered.length,
+              itemBuilder: (ctx, i) {
+                final cls = filtered[i];
+                final colorIndex = allClasses.indexOf(cls);
+                return KeyedSubtree(
+                  key: ValueKey('class-morph-${cls.id}'),
+                  child: _SwapIn(
+                    index: i,
+                    play: swapped,
+                    child: EntranceIn(
+                      index: i,
+                      play: !_introPlayed && !_searchOpen,
+                      child: _classCardMorph(
+                        context,
+                        p,
+                        cls,
+                        colorIndex,
+                        isList: isList,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      } else {
+        content = Center(
+          key: const ValueKey('list-morph-view'),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 720.dp),
+            child: ListView.builder(
+              padding: pad,
+              itemCount: filtered.length,
+              itemBuilder: (ctx, i) {
+                final cls = filtered[i];
+                final colorIndex = allClasses.indexOf(cls);
+                return KeyedSubtree(
+                  key: ValueKey('class-morph-${cls.id}'),
+                  child: _SwapIn(
+                    index: i,
+                    play: swapped,
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: isList ? 8.dp : 10.dp),
+                      child: EntranceIn(
+                        index: i,
+                        play: !_introPlayed && !_searchOpen,
+                        child: _classCardMorph(
+                          context,
+                          p,
+                          cls,
+                          colorIndex,
+                          isList: isList,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
     }
 
-    // Default: Cards list
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: 720.dp),
-        child: ListView.builder(
-          padding: pad,
-          itemCount: filtered.length,
-          itemBuilder: (ctx, i) {
-            final cls = filtered[i];
-            final colorIndex = allClasses.indexOf(cls);
-            return Padding(
-              padding: EdgeInsets.only(bottom: 10.dp),
-              child: EntranceIn(
-                index: i,
-                child: _classCard(context, p, cls, colorIndex),
-              ),
-            );
-          },
-        ),
-      ),
+    return KeyedSubtree(
+      key: ValueKey(isGrid ? 'classes-grid-$isWide' : 'classes-list-$isWide'),
+      child: content,
     );
   }
 
-  // ── List View Class Row (Minimal, pristine iOS list item) ─────────
-  Widget _classCardList(
+  // ── Morphing Class Card (Breeze spring morph for Cards & List) ────
+  Widget _classCardMorph(
     BuildContext context,
     Pal p,
     ClassModel cls,
-    int colorIndex,
-  ) {
-    final avatarInfo =
-        AppTheme.classAvatarInfo(cls.name, cls.section, colorIndex);
+    int colorIndex, {
+    required bool isList,
+  }) {
+    final avatarInfo = AppTheme.classAvatarInfo(
+      cls.name,
+      cls.section,
+      colorIndex,
+    );
     final accent = avatarInfo.accent;
     final students = cls.students;
+    final topStudent = students.isNotEmpty
+        ? students.reduce((a, b) => a.score > b.score ? a : b)
+        : null;
+
+    final morphDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: kSpringMs);
 
     return Dismissible(
-      key: Key('list-${cls.id}'),
+      key: Key('morph-${cls.id}'),
       direction: DismissDirection.endToStart,
       confirmDismiss: (_) => _confirmDelete(context, cls.displayName),
       onDismissed: (_) {
@@ -507,7 +697,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         padding: EdgeInsets.only(right: 20.dp),
         decoration: BoxDecoration(
           color: const Color(0xFFE5484D).withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(16.dp),
+          borderRadius: BorderRadius.circular(isList ? 16.dp : 20.dp),
         ),
         child: Icon(CupertinoIcons.trash, color: Colors.white, size: 20.dp),
       ),
@@ -522,103 +712,298 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         },
         onLongPress: () => _showClassOptions(context, cls, colorIndex),
         label: cls.displayName,
-        builder: (down) => GlassSurface(
-          radius: 16.dp,
-          lit: down,
-          padding: EdgeInsets.symmetric(horizontal: 14.dp, vertical: 11.dp),
-          child: Row(
-            children: [
-              // Clean Avatar circle
-              Container(
-                width: 32.dp,
-                height: 32.dp,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color.lerp(accent, Colors.white, 0.20)!,
-                      Color.lerp(accent, Colors.black, 0.04)!,
-                    ],
-                  ),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: p.dark ? 0.20 : 0.35),
-                    width: 0.8.dp,
-                  ),
+        builder: (down) => TweenAnimationBuilder<double>(
+          tween: Tween(end: isList ? 16.dp : 20.dp),
+          duration: morphDuration,
+          curve: kSpring,
+          builder: (context, radius, child) => GlassSurface(
+            radius: radius,
+            lit: down,
+            card: true,
+            child: child!,
+          ),
+          child: AnimatedPadding(
+            duration: morphDuration,
+            curve: kSpring,
+            padding: isList
+                ? EdgeInsets.symmetric(horizontal: 14.dp, vertical: 10.5.dp)
+                : EdgeInsets.fromLTRB(16.dp, 13.dp, 8.dp, 13.dp),
+            child: AnimatedSize(
+              duration: morphDuration,
+              curve: kSpring,
+              alignment: Alignment.centerLeft,
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: (kSpringMs * 0.55).round()),
+                reverseDuration: Duration(
+                  milliseconds: (kSpringMs * 0.22).round(),
                 ),
-                child: Center(
-                  child: avatarInfo.icon != null
-                      ? Icon(avatarInfo.icon, size: 14.dp, color: Colors.white)
-                      : Text(
-                          avatarInfo.label ?? '',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11.5.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                ),
-              ),
-              SizedBox(width: 12.dp),
-              // Class Name + Section
-              Expanded(
-                child: Row(
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.centerLeft,
+                  clipBehavior: Clip.none,
                   children: [
-                    Flexible(
-                      child: Text(
-                        cls.name,
-                        style: TextStyle(
-                          color: p.ink,
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (cls.section != null && cls.section!.isNotEmpty) ...[
-                      SizedBox(width: 6.dp),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 5.5.dp, vertical: 1.5.dp),
-                        decoration: BoxDecoration(
-                          color: accent.withValues(alpha: p.dark ? 0.20 : 0.10),
-                          borderRadius: BorderRadius.circular(6.dp),
-                        ),
-                        child: Text(
-                          cls.section!.length <= 2 ? 'Sec ${cls.section}' : cls.section!,
-                          style: TextStyle(
-                            color: accent,
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                    for (final w in previous)
+                      Positioned(left: 0, right: 0, top: 0, child: w),
+                    ?current,
                   ],
                 ),
-              ),
-              // Student count badge
-              Text(
-                '${students.length} ${students.length == 1 ? "student" : "students"}',
-                style: TextStyle(
-                  color: p.sub,
-                  fontSize: 12.5.sp,
-                  fontWeight: FontWeight.w500,
+                child: KeyedSubtree(
+                  key: ValueKey(isList ? 'list-body' : 'cards-body'),
+                  child: isList
+                      ? _classCardListBody(p, cls, accent, avatarInfo, students)
+                      : _classCardCardsBody(
+                          context,
+                          p,
+                          cls,
+                          accent,
+                          avatarInfo,
+                          students,
+                          topStudent,
+                          colorIndex,
+                        ),
                 ),
               ),
-              SizedBox(width: 8.dp),
-              // Subtle chevron forward
-              Icon(
-                CupertinoIcons.chevron_forward,
-                size: 14.dp,
-                color: p.sub.withValues(alpha: 0.6),
-              ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  // ── List View Class Card Body (Clean single-line layout) ──────────
+  Widget _classCardListBody(
+    Pal p,
+    ClassModel cls,
+    Color accent,
+    ClassAvatarInfo avatarInfo,
+    List<StudentModel> students,
+  ) {
+    return Row(
+      children: [
+        Container(
+          width: 32.dp,
+          height: 32.dp,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color.lerp(accent, Colors.white, 0.20)!,
+                Color.lerp(accent, Colors.black, 0.04)!,
+              ],
+            ),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: p.dark ? 0.20 : 0.35),
+              width: 0.8.dp,
+            ),
+          ),
+          child: Center(
+            child: avatarInfo.icon != null
+                ? Icon(avatarInfo.icon, size: 14.dp, color: Colors.white)
+                : Text(
+                    avatarInfo.label ?? '',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11.5.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+          ),
+        ),
+        SizedBox(width: 12.dp),
+        Expanded(
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  cls.name,
+                  style: TextStyle(
+                    color: p.ink,
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (cls.section != null && cls.section!.isNotEmpty) ...[
+                SizedBox(width: 6.dp),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 5.5.dp,
+                    vertical: 1.5.dp,
+                  ),
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: p.dark ? 0.20 : 0.10),
+                    borderRadius: BorderRadius.circular(6.dp),
+                  ),
+                  child: Text(
+                    cls.section!.length <= 2
+                        ? 'Sec ${cls.section}'
+                        : cls.section!,
+                    style: TextStyle(
+                      color: accent,
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        Text(
+          '${students.length} ${students.length == 1 ? "student" : "students"}',
+          style: TextStyle(
+            color: p.sub,
+            fontSize: 12.5.sp,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(width: 8.dp),
+        Icon(
+          CupertinoIcons.chevron_forward,
+          size: 14.dp,
+          color: p.sub.withValues(alpha: 0.6),
+        ),
+      ],
+    );
+  }
+
+  // ── Cards Mode Class Card Body (Two-line typographic Breeze layout) ─
+  Widget _classCardCardsBody(
+    BuildContext context,
+    Pal p,
+    ClassModel cls,
+    Color accent,
+    ClassAvatarInfo avatarInfo,
+    List<StudentModel> students,
+    StudentModel? topStudent,
+    int colorIndex,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 44.dp,
+          height: 44.dp,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color.lerp(accent, Colors.white, 0.22)!,
+                Color.lerp(accent, Colors.black, 0.04)!,
+              ],
+            ),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: p.dark ? 0.20 : 0.35),
+              width: 0.8.dp,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: p.dark ? 0.16 : 0.10),
+                blurRadius: 6.dp,
+                offset: Offset(0, 1.5.dp),
+              ),
+            ],
+          ),
+          child: Center(
+            child: avatarInfo.icon != null
+                ? Icon(avatarInfo.icon, size: 20.dp, color: Colors.white)
+                : Text(
+                    avatarInfo.label!,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: avatarInfo.label!.length > 2 ? 12.5.sp : 15.sp,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+          ),
+        ),
+        SizedBox(width: 14.dp),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(top: 2.dp),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  cls.name,
+                  style: TextStyle(
+                    color: p.ink,
+                    fontSize: 16.5.sp,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 3.5.dp),
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      if (cls.section != null && cls.section!.isNotEmpty) ...[
+                        TextSpan(
+                          text: cls.section!.length <= 2
+                              ? 'Sec ${cls.section}'
+                              : cls.section!,
+                          style: TextStyle(
+                            color: accent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const TextSpan(text: '  ·  '),
+                      ],
+                      TextSpan(
+                        text:
+                            '${students.length} ${students.length == 1 ? "student" : "students"}',
+                      ),
+                      if (topStudent != null) ...[
+                        const TextSpan(text: '  ·  '),
+                        TextSpan(
+                          text: topStudent.score > 0
+                              ? 'Top +${topStudent.score}'
+                              : (topStudent.score < 0
+                                    ? 'Top ${topStudent.score}'
+                                    : 'Top 0'),
+                          style: TextStyle(
+                            color: topStudent.score > 0
+                                ? (p.dark ? const Color(0xFF60A5FA) : p.accent)
+                                : (topStudent.score < 0
+                                      ? (p.dark
+                                            ? const Color(0xFFF87171)
+                                            : const Color(0xFFDC2626))
+                                      : p.sub),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: p.sub, fontSize: 13.sp),
+                ),
+              ],
+            ),
+          ),
+        ),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _showClassOptions(context, cls, colorIndex),
+          child: Padding(
+            padding: EdgeInsets.all(8.dp),
+            child: Icon(CupertinoIcons.ellipsis, size: 20.dp, color: p.sub),
+          ),
+        ),
+      ],
     );
   }
 
@@ -629,8 +1014,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ClassModel cls,
     int colorIndex,
   ) {
-    final avatarInfo =
-        AppTheme.classAvatarInfo(cls.name, cls.section, colorIndex);
+    final avatarInfo = AppTheme.classAvatarInfo(
+      cls.name,
+      cls.section,
+      colorIndex,
+    );
     final accent = avatarInfo.accent;
     final students = cls.students;
     final topStudent = students.isNotEmpty
@@ -641,27 +1029,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => ClassDetailScreen(classId: cls.id),
-          ),
+          MaterialPageRoute(builder: (_) => ClassDetailScreen(classId: cls.id)),
         );
       },
       onLongPress: () => _showClassOptions(context, cls, colorIndex),
       label: cls.displayName,
       builder: (down) => GlassSurface(
-        radius: 18.dp,
+        radius: 22.dp,
         lit: down,
-        padding: EdgeInsets.all(12.dp),
+        card: true,
+        padding: EdgeInsets.fromLTRB(14.dp, 12.dp, 8.dp, 12.dp),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Row: Avatar + Ellipsis
             Row(
               children: [
                 Container(
-                  width: 30.dp,
-                  height: 30.dp,
+                  width: 40.dp,
+                  height: 40.dp,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
@@ -673,29 +1058,79 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ],
                     ),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: p.dark ? 0.20 : 0.35),
+                      color: Colors.white.withValues(
+                        alpha: p.dark ? 0.20 : 0.35,
+                      ),
                       width: 0.8.dp,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accent.withValues(alpha: p.dark ? 0.16 : 0.10),
+                        blurRadius: 6.dp,
+                        offset: Offset(0, 1.5.dp),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: avatarInfo.icon != null
-                        ? Icon(avatarInfo.icon, size: 13.dp, color: Colors.white)
+                        ? Icon(
+                            avatarInfo.icon,
+                            size: 17.dp,
+                            color: Colors.white,
+                          )
                         : Text(
                             avatarInfo.label ?? '',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 10.5.sp,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.2,
                             ),
                           ),
                   ),
                 ),
-                const Spacer(),
+                SizedBox(width: 10.dp),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        cls.name,
+                        style: TextStyle(
+                          color: p.ink,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
+                          height: 1.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 3.dp),
+                      Text(
+                        [
+                          if (cls.section != null && cls.section!.isNotEmpty)
+                            'Sec ${cls.section}',
+                          '${students.length} ${students.length == 1 ? "student" : "students"}',
+                        ].join(' · '),
+                        style: TextStyle(
+                          color: p.sub,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () => _showClassOptions(context, cls, colorIndex),
-                  child: Padding(
-                    padding: EdgeInsets.all(4.dp),
+                  child: SizedBox(
+                    width: 32.dp,
+                    height: 32.dp,
                     child: Icon(
                       CupertinoIcons.ellipsis,
                       size: 16.dp,
@@ -705,235 +1140,131 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ],
             ),
-            // Middle: Name & Section
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  cls.name,
-                  style: TextStyle(
-                    color: p.ink,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.2,
+            const Spacer(),
+            // Who leads the class, at a glance: the top score, big, and
+            // whose it is.
+            Padding(
+              padding: EdgeInsets.only(left: 2.dp, right: 8.dp),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  if (topStudent != null) ...[
+                    Text(
+                      topStudent.score > 0
+                          ? '+${topStudent.score}'
+                          : '${topStudent.score}',
+                      style: TextStyle(
+                        color: AppTheme.scoreColor(
+                          topStudent.score,
+                          dark: p.dark,
+                        ),
+                        fontSize: 17.sp,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                        height: 1.1,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    SizedBox(width: 6.dp),
+                    Expanded(
+                      child: Text(
+                        'Top · ${topStudent.name}',
+                        style: TextStyle(
+                          color: p.sub,
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ] else
+                    Expanded(
+                      child: Text(
+                        'No students yet',
+                        style: TextStyle(
+                          color: p.sub,
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  Icon(
+                    CupertinoIcons.chevron_right,
+                    size: 14.dp,
+                    color: p.sub.withValues(alpha: 0.7),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 1.5.dp),
-                Text(
-                  cls.section != null && cls.section!.isNotEmpty
-                      ? 'Sec ${cls.section} · ${students.length} st.'
-                      : '${students.length} ${students.length == 1 ? "student" : "students"}',
-                  style: TextStyle(color: p.sub, fontSize: 11.5.sp),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                ],
+              ),
             ),
-            // Bottom: Top score indicator
-            if (topStudent != null)
-              Text(
-                topStudent.score > 0
-                    ? 'Top +${topStudent.score}'
-                    : (topStudent.score < 0 ? 'Top ${topStudent.score}' : 'Top 0'),
-                style: TextStyle(
-                  color: topStudent.score > 0
-                      ? (p.dark ? const Color(0xFF60A5FA) : p.accent)
-                      : (topStudent.score < 0
-                          ? (p.dark ? const Color(0xFFF87171) : const Color(0xFFDC2626))
-                          : p.sub),
-                  fontSize: 11.5.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              )
-            else
-              const SizedBox.shrink(),
           ],
         ),
       ),
     );
   }
 
-  Widget _classCard(
-    BuildContext context,
-    Pal p,
-    ClassModel cls,
-    int colorIndex,
-  ) {
-    final avatarInfo =
-        AppTheme.classAvatarInfo(cls.name, cls.section, colorIndex);
-    final accent = avatarInfo.accent;
-
-    final students = cls.students;
-    final topStudent = students.isNotEmpty
-        ? students.reduce((a, b) => a.score > b.score ? a : b)
-        : null;
-
-    return Dismissible(
-      key: Key(cls.id),
-      direction: DismissDirection.endToStart,
-      confirmDismiss: (_) => _confirmDelete(context, cls.displayName),
-      onDismissed: (_) {
-        ref.read(appProvider.notifier).deleteClass(cls.id);
-      },
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 22.dp),
-        decoration: BoxDecoration(
-          color: const Color(0xFFE5484D).withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(20.dp),
-        ),
-        child: Icon(CupertinoIcons.trash, color: Colors.white, size: 22.dp),
-      ),
-      child: GlassPress(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ClassDetailScreen(classId: cls.id),
-            ),
-          );
-        },
-        onLongPress: () => _showClassOptions(context, cls, colorIndex),
-        label: cls.displayName,
-        builder: (down) => GlassSurface(
-          radius: 20.dp,
-          lit: down,
-          padding: EdgeInsets.fromLTRB(16.dp, 13.dp, 8.dp, 13.dp),
+  // ── Unified Floating Bottom Dock for Wide Displays (Center combined dock) ──
+  Widget _desktopDock(Pal p, int classCount, int studentCount) {
+    final bottom = MediaQuery.paddingOf(context).bottom + 20.dp;
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottom),
+        child: GlassSurface(
+          radius: 28.dp,
+          thick: true,
+          padding: EdgeInsets.fromLTRB(16.dp, 6.dp, 6.dp, 6.dp),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Softened circular pastel avatar with gentle ambient glow & hairline rim
-              Container(
-                width: 44.dp,
-                height: 44.dp,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color.lerp(accent, Colors.white, 0.22)!,
-                      Color.lerp(accent, Colors.black, 0.04)!,
-                    ],
-                  ),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: p.dark ? 0.20 : 0.35),
-                    width: 0.8.dp,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accent.withValues(alpha: p.dark ? 0.16 : 0.10),
-                      blurRadius: 6.dp,
-                      offset: Offset(0, 1.5.dp),
+              Icon(CupertinoIcons.folder, size: 14.dp, color: p.accent),
+              SizedBox(width: 6.dp),
+              Text(
+                '$classCount ${classCount == 1 ? "class" : "classes"}',
+                style: TextStyle(
+                  color: p.ink,
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(width: 8.dp),
+              Container(width: 1, height: 12.dp, color: p.faint),
+              SizedBox(width: 8.dp),
+              Icon(CupertinoIcons.person_2, size: 14.dp, color: p.accent),
+              SizedBox(width: 6.dp),
+              Text(
+                '$studentCount students',
+                style: TextStyle(
+                  color: p.ink,
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(width: 12.dp),
+              Container(width: 1, height: 20.dp, color: p.faint),
+              SizedBox(width: 10.dp),
+              GlassPress(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _showClassForm(context, null);
+                },
+                label: 'Create Class',
+                builder: (down) => SizedBox.square(
+                  dimension: 40.dp,
+                  child: GlassSurface(
+                    radius: 20.dp,
+                    thick: true,
+                    lit: down,
+                    gradient: p.accentFill,
+                    child: const Center(
+                      child: Icon(
+                        CupertinoIcons.plus,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: avatarInfo.icon != null
-                      ? Icon(
-                          avatarInfo.icon,
-                          size: 20.dp,
-                          color: Colors.white,
-                        )
-                      : Text(
-                          avatarInfo.label!,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: avatarInfo.label!.length > 2
-                                ? 12.5.sp
-                                : 15.sp,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                ),
-              ),
-              SizedBox(width: 14.dp),
-              // Title and clean typographic subtitle (Breeze style)
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 2.dp),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        cls.name,
-                        style: TextStyle(
-                          color: p.ink,
-                          fontSize: 16.5.sp,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 3.5.dp),
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            if (cls.section != null &&
-                                cls.section!.isNotEmpty) ...[
-                              TextSpan(
-                                text: cls.section!.length <= 2
-                                    ? 'Sec ${cls.section}'
-                                    : cls.section!,
-                                style: TextStyle(
-                                  color: accent,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              TextSpan(text: '  ·  '),
-                            ],
-                            TextSpan(
-                              text:
-                                  '${students.length} ${students.length == 1 ? "student" : "students"}',
-                            ),
-                            if (topStudent != null) ...[
-                              TextSpan(text: '  ·  '),
-                              TextSpan(
-                                text: topStudent.score > 0
-                                    ? 'Top +${topStudent.score}'
-                                    : (topStudent.score < 0
-                                        ? 'Top ${topStudent.score}'
-                                        : 'Top 0'),
-                                style: TextStyle(
-                                  color: topStudent.score > 0
-                                      ? (p.dark
-                                          ? const Color(0xFF60A5FA)
-                                          : p.accent)
-                                      : (topStudent.score < 0
-                                          ? (p.dark
-                                              ? const Color(0xFFF87171)
-                                              : const Color(0xFFDC2626))
-                                          : p.sub),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: p.sub, fontSize: 13.sp),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Options menu
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => _showClassOptions(context, cls, colorIndex),
-                child: Padding(
-                  padding: EdgeInsets.all(8.dp),
-                  child: Icon(
-                    CupertinoIcons.ellipsis,
-                    size: 20.dp,
-                    color: p.sub,
                   ),
                 ),
               ),
@@ -944,17 +1275,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ── Floating Bottom Dock (Breeze style, responsive on wide screens) ──
-  Widget _bottomBar(
-    Pal p,
-    int classCount,
-    int studentCount,
-    int avgScore,
-  ) {
+  // ── Floating Bottom Dock (Breeze style, responsive on wide & fold displays) ──
+  Widget _bottomBar(Pal p, int classCount, int studentCount, int avgScore) {
     final isWide = isWideLayout(context);
-    final bottom = MediaQuery.paddingOf(context).bottom + 14.dp;
+    final bottom = MediaQuery.paddingOf(context).bottom + 20.dp;
     final sideOffset = isWide
-        ? math.max(24.dp, (MediaQuery.sizeOf(context).width - 1400.dp) / 2 + 24.dp)
+        ? math.max(
+            24.dp,
+            (MediaQuery.sizeOf(context).width - 1040.dp) / 2 + 24.dp,
+          )
         : 16.dp;
 
     return Positioned(
@@ -999,9 +1328,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // ── Floating Action Button (Breeze style, responsive on wide screens) ──
   Widget _fab(Pal p) {
     final isWide = isWideLayout(context);
-    final bottom = MediaQuery.paddingOf(context).bottom + 14.dp;
+    final bottom = MediaQuery.paddingOf(context).bottom + 20.dp;
     final sideOffset = isWide
-        ? math.max(24.dp, (MediaQuery.sizeOf(context).width - 1400.dp) / 2 + 24.dp)
+        ? math.max(
+            24.dp,
+            (MediaQuery.sizeOf(context).width - 1040.dp) / 2 + 24.dp,
+          )
         : 16.dp;
 
     return Positioned(
@@ -1021,11 +1353,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             lit: down,
             gradient: p.accentFill,
             child: const Center(
-              child: Icon(
-                CupertinoIcons.plus,
-                color: Colors.white,
-                size: 22,
-              ),
+              child: Icon(CupertinoIcons.plus, color: Colors.white, size: 22),
             ),
           ),
         ),
@@ -1059,14 +1387,127 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // ── Options Sheet ─────────────────────────────────────────────────
-  void _showClassOptions(
-    BuildContext context,
-    ClassModel cls,
-    int colorIndex,
-  ) {
+  // ── Appearance (theme) ───────────────────────────────────────────
+  IconData _themeIcon(ThemeMode mode) => switch (mode) {
+        ThemeMode.light => CupertinoIcons.sun_max,
+        ThemeMode.dark => CupertinoIcons.moon,
+        ThemeMode.system => CupertinoIcons.circle_lefthalf_fill,
+      };
+
+  void _showAppearanceSheet(BuildContext context) {
+    showGlassSheet(
+      context,
+      builder: (ctx) => Consumer(
+        builder: (ctx, ref, _) {
+          final p = Pal.of(ctx);
+          final current = ref.watch(themeModeProvider);
+          Widget option(ThemeMode mode, String title, String hint) {
+            final selected = current == mode;
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                ref.read(themeModeProvider.notifier).set(mode);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                margin: EdgeInsets.only(bottom: 6.dp),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12.dp,
+                  vertical: 10.dp,
+                ),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? p.accent.withValues(alpha: p.dark ? 0.18 : 0.10)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(14.dp),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36.dp,
+                      height: 36.dp,
+                      decoration: BoxDecoration(
+                        color: p.accent.withValues(alpha: p.dark ? 0.18 : 0.10),
+                        borderRadius: BorderRadius.circular(10.dp),
+                      ),
+                      child: Icon(
+                        _themeIcon(mode),
+                        size: 17.dp,
+                        color: p.accent,
+                      ),
+                    ),
+                    SizedBox(width: 12.dp),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              color: p.ink,
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            hint,
+                            style: TextStyle(color: p.sub, fontSize: 12.sp),
+                          ),
+                        ],
+                      ),
+                    ),
+                    AnimatedOpacity(
+                      opacity: selected ? 1 : 0,
+                      duration: const Duration(milliseconds: 160),
+                      child: Icon(
+                        CupertinoIcons.checkmark_alt,
+                        size: 18.dp,
+                        color: p.accent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return Padding(
+            padding: EdgeInsets.fromLTRB(16.dp, 8.dp, 16.dp, 16.dp),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(8.dp, 8.dp, 8.dp, 12.dp),
+                  child: Text(
+                    'Appearance',
+                    style: TextStyle(
+                      color: p.ink,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                option(ThemeMode.system, 'System', 'Match the phone'),
+                option(ThemeMode.light, 'Light', 'Always light'),
+                option(ThemeMode.dark, 'Dark', 'Always dark'),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showClassOptions(BuildContext context, ClassModel cls, int colorIndex) {
     final p = Pal.of(context);
-    final avatarInfo =
-        AppTheme.classAvatarInfo(cls.name, cls.section, colorIndex);
+    final avatarInfo = AppTheme.classAvatarInfo(
+      cls.name,
+      cls.section,
+      colorIndex,
+    );
     final accent = avatarInfo.accent;
 
     showGlassSheet(
@@ -1094,11 +1535,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     child: Center(
                       child: avatarInfo.icon != null
-                          ? Icon(
-                              avatarInfo.icon,
-                              size: 20.dp,
-                              color: accent,
-                            )
+                          ? Icon(avatarInfo.icon, size: 20.dp, color: accent)
                           : Text(
                               avatarInfo.label!,
                               style: TextStyle(
@@ -1200,8 +1637,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required VoidCallback onTap,
     bool danger = false,
   }) {
-    final dangerColor =
-        p.dark ? const Color(0xFFFF5449) : const Color(0xFFE53935);
+    final dangerColor = p.dark
+        ? const Color(0xFFFF5449)
+        : const Color(0xFFE53935);
     final color = danger ? dangerColor : p.ink;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -1224,15 +1662,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 borderRadius: BorderRadius.circular(10.dp),
                 border: danger
                     ? Border.all(
-                        color:
-                            dangerColor.withValues(alpha: p.dark ? 0.45 : 0.30),
+                        color: dangerColor.withValues(
+                          alpha: p.dark ? 0.45 : 0.30,
+                        ),
                         width: 0.8.dp,
                       )
                     : null,
               ),
               child: Center(
-                child: Icon(icon,
-                    size: 18.dp, color: danger ? dangerColor : p.accent),
+                child: Icon(
+                  icon,
+                  size: 18.dp,
+                  color: danger ? dangerColor : p.accent,
+                ),
               ),
             ),
             SizedBox(width: 14.dp),
@@ -1351,17 +1793,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         if (formKey.currentState!.validate()) {
                           final sec = sectionCtrl.text.trim();
                           if (existing == null) {
-                            ref.read(appProvider.notifier).addClass(
+                            ref
+                                .read(appProvider.notifier)
+                                .addClass(
                                   ClassModel(
-                                    id: DateTime.now()
-                                        .millisecondsSinceEpoch
+                                    id: DateTime.now().millisecondsSinceEpoch
                                         .toString(),
                                     name: nameCtrl.text.trim(),
                                     section: sec.isEmpty ? null : sec,
                                   ),
                                 );
                           } else {
-                            ref.read(appProvider.notifier).updateClass(
+                            ref
+                                .read(appProvider.notifier)
+                                .updateClass(
                                   existing.copyWith(
                                     name: nameCtrl.text.trim(),
                                     section: sec.isEmpty ? null : sec,
@@ -1434,8 +1879,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Container(
                       height: 46.dp,
                       alignment: Alignment.center,
-                      child: Text('Cancel',
-                          style: TextStyle(color: p.sub, fontSize: 15.sp)),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(color: p.sub, fontSize: 15.sp),
+                      ),
                     ),
                   ),
                 ),
@@ -1504,8 +1951,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Container(
                       height: 46.dp,
                       alignment: Alignment.center,
-                      child: Text('Cancel',
-                          style: TextStyle(color: p.sub, fontSize: 15.sp)),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(color: p.sub, fontSize: 15.sp),
+                      ),
                     ),
                   ),
                 ),
@@ -1532,8 +1981,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         borderRadius: BorderRadius.circular(14.dp),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFEF4444)
-                                .withValues(alpha: p.dark ? 0.45 : 0.30),
+                            color: const Color(
+                              0xFFEF4444,
+                            ).withValues(alpha: p.dark ? 0.45 : 0.30),
                             blurRadius: 10,
                             offset: const Offset(0, 3),
                           ),
@@ -1557,6 +2007,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A card arriving after a grid/list switch: it rises the last few dp
+/// into its slot on a spring, a beat after the card before it (Breeze style).
+class _SwapIn extends StatefulWidget {
+  const _SwapIn({required this.index, required this.play, required this.child});
+
+  final int index;
+  final bool play;
+  final Widget child;
+
+  @override
+  State<_SwapIn> createState() => _SwapInState();
+}
+
+class _SwapInState extends State<_SwapIn> {
+  late final bool _play =
+      widget.play && !MediaQuery.disableAnimationsOf(context);
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_play) return widget.child;
+    final step = 35 * widget.index.clamp(0, 8);
+    final total = kSpringMs + step;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: total),
+      curve: Interval(step / total, 1, curve: kSpring),
+      child: widget.child,
+      builder: (context, v, child) =>
+          Transform.translate(offset: Offset(0, 24.dp * (1 - v)), child: child),
     );
   }
 }

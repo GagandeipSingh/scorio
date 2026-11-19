@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.mvm" "\0"
+            VALUE "CompanyName", "com.blessing" "\0"
             VALUE "FileDescription", "scorio" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "scorio" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.mvm. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.blessing. All rights reserved." "\0"
             VALUE "OriginalFilename", "scorio.exe" "\0"
             VALUE "ProductName", "scorio" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

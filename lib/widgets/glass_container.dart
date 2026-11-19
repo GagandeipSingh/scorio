@@ -33,11 +33,7 @@ class AppCard extends StatelessWidget {
     );
 
     final wrapped = onTap != null
-        ? GlassPress(
-            onTap: onTap!,
-            label: 'Card',
-            child: card,
-          )
+        ? GlassPress(onTap: onTap!, label: 'Card', child: card)
         : card;
 
     if (margin != null) {

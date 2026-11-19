@@ -63,10 +63,7 @@ class _Sky extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    canvas.drawRect(
-      rect,
-      Paint()..color = _calm(sky.$2, dark),
-    );
+    canvas.drawRect(rect, Paint()..color = _calm(sky.$2, dark));
 
     // Accent light wash from the top left
     canvas.drawRect(

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'motion.dart';
+import 'scale.dart';
 
 class GlassLens {
   GlassLens._();
@@ -35,6 +36,7 @@ class GlassSurface extends StatelessWidget {
     this.thick = false,
     this.lit = false,
     this.blur,
+    this.card = false,
   });
 
   final Widget child;
@@ -45,6 +47,7 @@ class GlassSurface extends StatelessWidget {
   final bool thick;
   final bool lit;
   final double? blur;
+  final bool card;
 
   @override
   Widget build(BuildContext context) {
@@ -65,11 +68,60 @@ class GlassSurface extends StatelessWidget {
       );
     }
 
+    if (card) {
+      return _cardGlass(context, dark, shape);
+    }
+
     final nested = _GlassNest.inside(context);
     if (!nested && GlassLens.ready) {
       return _lens(context, dark, shape);
     }
     return _frost(dark, shape);
+  }
+
+  Widget _cardGlass(BuildContext context, bool dark, BorderRadius shape) {
+    final fill = dark
+        ? (tint ?? const Color(0xFF1E2433)).withValues(alpha: lit ? 0.72 : 0.58)
+        : (tint ?? Colors.white).withValues(alpha: lit ? 0.88 : 0.78);
+
+    final borderColor = dark
+        ? Colors.white.withValues(alpha: lit ? 0.22 : 0.12)
+        : Colors.white.withValues(alpha: lit ? 0.95 : 0.85);
+
+    final shadows = dark
+        ? <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.28),
+              blurRadius: 14.dp,
+              offset: Offset(0, 3.dp),
+            ),
+          ]
+        : <BoxShadow>[
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+              blurRadius: 14.dp,
+              offset: Offset(0, 2.dp),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 4.dp,
+              offset: Offset(0, 1.dp),
+            ),
+          ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: gradient == null ? fill : null,
+        gradient: gradient,
+        borderRadius: shape,
+        border: Border.all(color: borderColor, width: 0.9.dp),
+        boxShadow: shadows,
+      ),
+      child: ClipRRect(
+        borderRadius: shape,
+        child: Padding(padding: padding, child: child),
+      ),
+    );
   }
 
   Widget _lens(BuildContext context, bool dark, BorderRadius shape) {
@@ -81,9 +133,9 @@ class GlassSurface extends StatelessWidget {
             0.12,
           )!.withValues(alpha: 0.9)
         : tint ??
-            (dark
-                ? const Color(0xFF3C3F46).withValues(alpha: 0.38)
-                : const Color(0xFFF8F9FB).withValues(alpha: 0.42));
+              (dark
+                  ? const Color(0xFF3C3F46).withValues(alpha: 0.38)
+                  : const Color(0xFFF8F9FB).withValues(alpha: 0.42));
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: shape,
@@ -392,8 +444,8 @@ class _RenderLens extends RenderProxyBox {
       final fadeBg = _dark
           ? const Color(0x14FFFFFF)
           : (_tint.a > 0
-              ? _tint.withValues(alpha: 0.12)
-              : const Color(0x18FFFFFF));
+                ? _tint.withValues(alpha: 0.12)
+                : const Color(0x18FFFFFF));
       context.canvas.drawRRect(
         RRect.fromRectAndRadius(offset & size, Radius.circular(_radius)),
         Paint()..color = fadeBg,

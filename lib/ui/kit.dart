@@ -10,10 +10,8 @@ import 'scale.dart';
 
 class Pal {
   Pal._(this.dark, this.accent);
-  factory Pal.of(BuildContext context) => Pal._(
-        Theme.of(context).brightness == Brightness.dark,
-        AppTheme.accent,
-      );
+  factory Pal.of(BuildContext context) =>
+      Pal._(Theme.of(context).brightness == Brightness.dark, AppTheme.accent);
 
   final bool dark;
   final Color accent;
@@ -106,17 +104,10 @@ class EmptyState extends StatelessWidget {
               Text(
                 hint!,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: p.sub,
-                  fontSize: 13.5.sp,
-                  height: 1.45,
-                ),
+                style: TextStyle(color: p.sub, fontSize: 13.5.sp, height: 1.45),
               ),
             ],
-            if (action != null) ...[
-              SizedBox(height: 22.dp),
-              action!,
-            ],
+            if (action != null) ...[SizedBox(height: 22.dp), action!],
           ],
         ),
       ),
@@ -160,15 +151,15 @@ class Caption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        text.toUpperCase(),
-        textAlign: align,
-        style: TextStyle(
-          color: color ?? Pal.of(context).sub,
-          fontSize: 11.5.sp,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.9,
-        ),
-      );
+    text.toUpperCase(),
+    textAlign: align,
+    style: TextStyle(
+      color: color ?? Pal.of(context).sub,
+      fontSize: 11.5.sp,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.9,
+    ),
+  );
 }
 
 class SectionTitle extends StatelessWidget {
@@ -177,9 +168,9 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.fromLTRB(6.dp, 16.dp, 6.dp, 8.dp),
-        child: Caption(text),
-      );
+    padding: EdgeInsets.fromLTRB(6.dp, 16.dp, 6.dp, 8.dp),
+    child: Caption(text),
+  );
 }
 
 class Hairline extends StatelessWidget {
@@ -187,9 +178,9 @@ class Hairline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.symmetric(vertical: 12.dp),
-        child: Container(height: 0.6.dp, color: Pal.of(context).faint),
-      );
+    padding: EdgeInsets.symmetric(vertical: 12.dp),
+    child: Container(height: 0.6.dp, color: Pal.of(context).faint),
+  );
 }
 
 class Segments<T> extends StatelessWidget {

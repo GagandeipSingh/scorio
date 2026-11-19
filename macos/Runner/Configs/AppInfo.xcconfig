@@ -8,7 +8,7 @@
 PRODUCT_NAME = scorio
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.mvm.scorio
+PRODUCT_BUNDLE_IDENTIFIER = com.blessing.scorio
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.mvm. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.blessing. All rights reserved.

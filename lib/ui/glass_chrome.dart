@@ -16,6 +16,7 @@ class GlassScaffold extends StatelessWidget {
     this.statusBarStyle = GlassStatusBarStyle.dark,
     this.maxContentWidth,
     this.floatingActionButton,
+    this.resizeToAvoidBottomInset = false,
   });
 
   final Widget body;
@@ -24,6 +25,7 @@ class GlassScaffold extends StatelessWidget {
   final GlassStatusBarStyle statusBarStyle;
   final double? maxContentWidth;
   final Widget? floatingActionButton;
+  final bool resizeToAvoidBottomInset;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +60,7 @@ class GlassScaffold extends StatelessWidget {
           if (background != null) Positioned.fill(child: background!),
           Scaffold(
             backgroundColor: Colors.transparent,
-            resizeToAvoidBottomInset: true,
+            resizeToAvoidBottomInset: resizeToAvoidBottomInset,
             body: content,
             floatingActionButton: floatingActionButton,
           ),
@@ -155,28 +157,28 @@ Future<T?> showGlassSheet<T>(
           child: ScaleTransition(
             scale: Tween<double>(begin: 0.92, end: 1.0).animate(pop),
             child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 480,
-                  maxHeight: math.min(640, screenH - 32),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: GlassSurface(
-                    radius: 34,
-                    thick: true,
-                    blur: 12,
-                    tint: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF16181C).withValues(alpha: 0.30)
-                        : const Color(0xFFEEF0F4).withValues(alpha: 0.55),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: SingleChildScrollView(child: builder(ctx)),
-                    ),
+              constraints: BoxConstraints(
+                maxWidth: 480,
+                maxHeight: math.min(640, screenH - 32),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: GlassSurface(
+                  radius: 34,
+                  thick: true,
+                  blur: 12,
+                  tint: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF16181C).withValues(alpha: 0.30)
+                      : const Color(0xFFEEF0F4).withValues(alpha: 0.55),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: SingleChildScrollView(child: builder(ctx)),
                   ),
                 ),
               ),
             ),
+          ),
         );
       },
     );
@@ -224,10 +226,9 @@ Future<T?> showGlassSheet<T>(
                           width: 38,
                           height: 5,
                           decoration: BoxDecoration(
-                            color: Theme.of(ctx)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.22),
+                            color: Theme.of(
+                              ctx,
+                            ).colorScheme.onSurface.withValues(alpha: 0.22),
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),
@@ -415,22 +416,56 @@ class _GlassPressState extends State<GlassPress> {
   }
 }
 
-class RoundGlassButton extends StatelessWidget {
-  const RoundGlassButton({
+class SemiboldIcon extends StatelessWidget {
+  const SemiboldIcon(
+    this.icon, {
     super.key,
-    required this.icon,
-    required this.onPressed,
-    required this.semanticLabel,
-    this.size,
-    this.tint,
-    this.gradient,
-    this.iconColor,
+    required this.size,
+    required this.color,
   });
 
   final IconData icon;
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Transform.translate(
+          offset: const Offset(0.35, 0.35),
+          child: Icon(icon, size: size, color: color),
+        ),
+        Icon(icon, size: size, color: color),
+      ],
+    );
+  }
+}
+
+class RoundGlassButton extends StatelessWidget {
+  const RoundGlassButton({
+    super.key,
+    this.icon,
+    this.child,
+    required this.onPressed,
+    required this.semanticLabel,
+    this.size,
+    this.iconSize,
+    this.tint,
+    this.gradient,
+    this.iconColor,
+  }) : assert(
+         icon != null || child != null,
+         'Either icon or child must be provided',
+       );
+
+  final IconData? icon;
+  final Widget? child;
   final VoidCallback onPressed;
   final String semanticLabel;
   final double? size;
+  final double? iconSize;
   final Color? tint;
   final Gradient? gradient;
   final Color? iconColor;
@@ -438,7 +473,7 @@ class RoundGlassButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final s = size ?? 42.0;
+    final s = size ?? 40.0;
     return GlassPress(
       onTap: onPressed,
       label: semanticLabel,
@@ -451,11 +486,15 @@ class RoundGlassButton extends StatelessWidget {
           tint: tint,
           gradient: gradient,
           child: Center(
-            child: Icon(
-              icon,
-              color: iconColor ?? (dark ? Colors.white : const Color(0xFF14151A)),
-              size: s * 0.48,
-            ),
+            child:
+                child ??
+                Icon(
+                  icon!,
+                  color:
+                      iconColor ??
+                      (dark ? Colors.white : const Color(0xFF14151A)),
+                  size: iconSize ?? (s * 0.44),
+                ),
           ),
         ),
       ),

@@ -84,7 +84,9 @@ void main() {
   // has been drawn yet. Glass over nothing is clear, not white: keep the
   // backdrop's coverage, so the card fades in with the rest of the page.
   float cover = mid.a;
-  col /= max(cover, 0.001);
+  if (cover > 0.02) {
+    col /= cover;
+  }
 
   // Colour lift, then the glass's own colour and shade.
   float luma = dot(col, vec3(0.2126, 0.7152, 0.0722));

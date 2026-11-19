@@ -13,7 +13,9 @@ class AppTheme {
   // Core palette — Classroom Chalkboard Green
   static const Color background = Color(0xFFF2F4F9);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color accent = Color(0xFF2589FE); // Lighter Radiant Sky Azure (App Icon Blue)
+  static const Color accent = Color(
+    0xFF2589FE,
+  ); // Lighter Radiant Sky Azure (App Icon Blue)
   static const Color accentBright = Color(0xFF38BDF8); // Radiant Sky Blue
   static const Color accentSoft = Color(0xFFEFF6FF); // Soft Ice Blue
   static const Color positive = Color(0xFF2589FE); // Radiant Sky Azure
@@ -39,7 +41,10 @@ class AppTheme {
   // Each class gets an instantly recognizable signature color:
   // 0: Royal Blue, 1: Warm Amber, 2: Vivid Violet, 3: Sunset Coral, 4: Lush Emerald, 5: Berry Rose, 6: Ocean Cyan, 7: Modern Slate
   static const List<List<Color>> _classPalette = [
-    [Color(0xFFEFF6FF), Color(0xFF2E8BFF)], // 0: Apple Blue (Lighter Radiant Sky Azure)
+    [
+      Color(0xFFEFF6FF),
+      Color(0xFF2E8BFF),
+    ], // 0: Apple Blue (Lighter Radiant Sky Azure)
     [Color(0xFFFFFBEB), Color(0xFFD97706)], // 1: Warm Amber
     [Color(0xFFF5F3FF), Color(0xFF8B5CF6)], // 2: Lavender Violet
     [Color(0xFFFFF7ED), Color(0xFFF97316)], // 3: Soft Coral Orange
@@ -88,7 +93,9 @@ class AppTheme {
         lower.contains('botany') ||
         lower.contains('zoolog')) {
       return ClassAvatarInfo(
-          icon: CupertinoIcons.leaf_arrow_circlepath, accent: accent);
+        icon: CupertinoIcons.leaf_arrow_circlepath,
+        accent: accent,
+      );
     }
     if (lower.contains('science')) {
       return ClassAvatarInfo(icon: CupertinoIcons.sparkles, accent: accent);
@@ -110,7 +117,9 @@ class AppTheme {
         lower.contains('draw') ||
         lower.contains('paint')) {
       return ClassAvatarInfo(
-          icon: CupertinoIcons.paintbrush_fill, accent: accent);
+        icon: CupertinoIcons.paintbrush_fill,
+        accent: accent,
+      );
     }
     if (lower.contains('music') ||
         lower.contains('band') ||
@@ -124,15 +133,18 @@ class AppTheme {
         lower.contains('comp') ||
         lower.contains('it')) {
       return ClassAvatarInfo(
-          icon: CupertinoIcons.chevron_left_slash_chevron_right,
-          accent: accent);
+        icon: CupertinoIcons.chevron_left_slash_chevron_right,
+        accent: accent,
+      );
     }
     if (lower.contains('pe') ||
         lower.contains('sport') ||
         lower.contains('gym') ||
         lower.contains('fit')) {
       return ClassAvatarInfo(
-          icon: CupertinoIcons.sportscourt_fill, accent: accent);
+        icon: CupertinoIcons.sportscourt_fill,
+        accent: accent,
+      );
     }
 
     // 2. Numbered / Grade classes: e.g. "Class 8", "Grade 10", "8th Std", "Class 8B"
@@ -140,9 +152,9 @@ class AppTheme {
         ? section.trim().toUpperCase()
         : '';
     final numMatch = RegExp(
-            r'\b(?:class|grade|std|standard|sec|room)?\s*([0-9]{1,2}(?:st|nd|rd|th)?|[IVXLCDM]{1,4})\b',
-            caseSensitive: false)
-        .firstMatch(clean);
+      r'\b(?:class|grade|std|standard|sec|room)?\s*([0-9]{1,2}(?:st|nd|rd|th)?|[IVXLCDM]{1,4})\b',
+      caseSensitive: false,
+    ).firstMatch(clean);
 
     if (numMatch != null && numMatch.group(1) != null) {
       final numStr = numMatch.group(1)!;
@@ -159,7 +171,9 @@ class AppTheme {
       final w2 = words[1].replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
       if (w1.isNotEmpty && w2.isNotEmpty) {
         return ClassAvatarInfo(
-            label: '${w1[0]}${w2[0]}'.toUpperCase(), accent: accent);
+          label: '${w1[0]}${w2[0]}'.toUpperCase(),
+          accent: accent,
+        );
       }
     }
 
@@ -227,25 +241,24 @@ class AppTheme {
   }
 
   static Color scoreColor(int score, {bool dark = false}) {
-    if (score > 0) return dark ? const Color(0xFF60A5FA) : const Color(0xFF2589FE);
+    if (score > 0) {
+      return dark ? const Color(0xFF60A5FA) : const Color(0xFF2589FE);
+    }
     if (score < 0) return dark ? const Color(0xFFF87171) : negative;
     return dark ? darkTextSecondary : textSecondary;
   }
 
   static Color scoreBg(int score, {bool dark = false}) {
     if (score > 0) {
-      return dark
-          ? const Color(0xFF1E3A8A).withValues(alpha: 0.35)
-          : positiveSoft;
+      return (dark ? const Color(0xFF60A5FA) : const Color(0xFF2589FE))
+          .withValues(alpha: dark ? 0.18 : 0.10);
     }
     if (score < 0) {
-      return dark
-          ? const Color(0xFF7F1D1D).withValues(alpha: 0.4)
-          : negativeSoft;
+      return const Color(0xFFEF4444).withValues(alpha: dark ? 0.18 : 0.10);
     }
     return dark
-        ? Colors.white.withValues(alpha: 0.06)
-        : const Color(0xFFF8FAFC);
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.05);
   }
 
   static const List<BoxShadow> cardShadow = [
@@ -268,16 +281,44 @@ class AppTheme {
     final txtTer = dark ? darkTextTertiary : textTertiary;
 
     final baseTextTheme = TextTheme(
-      headlineLarge: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w800),
-      headlineMedium: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w800),
-      headlineSmall: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w700),
-      titleLarge: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w600),
-      titleMedium: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w600),
-      titleSmall: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w500),
+      headlineLarge: TextStyle(
+        fontFamily: 'Inter',
+        color: txt,
+        fontWeight: FontWeight.w800,
+      ),
+      headlineMedium: TextStyle(
+        fontFamily: 'Inter',
+        color: txt,
+        fontWeight: FontWeight.w800,
+      ),
+      headlineSmall: TextStyle(
+        fontFamily: 'Inter',
+        color: txt,
+        fontWeight: FontWeight.w700,
+      ),
+      titleLarge: TextStyle(
+        fontFamily: 'Inter',
+        color: txt,
+        fontWeight: FontWeight.w600,
+      ),
+      titleMedium: TextStyle(
+        fontFamily: 'Inter',
+        color: txt,
+        fontWeight: FontWeight.w600,
+      ),
+      titleSmall: TextStyle(
+        fontFamily: 'Inter',
+        color: txt,
+        fontWeight: FontWeight.w500,
+      ),
       bodyLarge: TextStyle(fontFamily: 'Inter', color: txt),
       bodyMedium: TextStyle(fontFamily: 'Inter', color: txtSec),
       bodySmall: TextStyle(fontFamily: 'Inter', color: txtTer, fontSize: 12),
-      labelLarge: TextStyle(fontFamily: 'Inter', color: txt, fontWeight: FontWeight.w600),
+      labelLarge: TextStyle(
+        fontFamily: 'Inter',
+        color: txt,
+        fontWeight: FontWeight.w600,
+      ),
     );
 
     return ThemeData(
