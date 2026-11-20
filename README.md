@@ -14,6 +14,8 @@ A quick scoreboard for classes on Android. Give points in one tap and always see
 
 <img src="store/tablet_10in/01_home.png" width="620">
 
+<img src="store/desktop/01_home.png" width="620">
+
 ## Download
 
 Get the latest APK from [Releases](https://github.com/GagandeipSingh/scorio/releases/latest). Most phones use the **arm64-v8a** file. Requires Android 7.0 or newer.
@@ -26,7 +28,7 @@ Get the latest APK from [Releases](https://github.com/GagandeipSingh/scorio/rele
 - **Your view:** cards, list or grid
 - **Search:** find any class or student
 - **Light or dark:** or follow your phone
-- **Any screen:** phones, tablets and foldables
+- **Any screen:** phones, tablets, foldables and desktop mode
 
 ## Build
 
