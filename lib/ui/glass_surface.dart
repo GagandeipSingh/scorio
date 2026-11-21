@@ -36,6 +36,7 @@ class GlassSurface extends StatelessWidget {
     this.thick = false,
     this.lit = false,
     this.blur,
+    this.edgeless = false,
     this.card = false,
   });
 
@@ -47,6 +48,11 @@ class GlassSurface extends StatelessWidget {
   final bool thick;
   final bool lit;
   final double? blur;
+
+  /// Glass with no edge: no rim, no bent edge, no halo. For a strip that
+  /// runs off the screen (behind the nav buttons), where an edge reads as
+  /// a border.
+  final bool edgeless;
   final bool card;
 
   @override
@@ -139,7 +145,7 @@ class GlassSurface extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: shape,
-        boxShadow: dark
+        boxShadow: dark || edgeless
             ? const []
             : [
                 BoxShadow(
@@ -159,6 +165,7 @@ class GlassSurface extends StatelessWidget {
           floating: thick,
           tint: glass,
           blur: blur ?? 5.5,
+          edgeless: edgeless,
           child: _GlassNest(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -198,7 +205,7 @@ class GlassSurface extends StatelessWidget {
             alpha: lit ? 0.80 : (thick ? 0.70 : 0.58),
           );
 
-    final shadows = dark
+    final shadows = dark || edgeless
         ? const <BoxShadow>[]
         : [
             BoxShadow(
@@ -221,7 +228,9 @@ class GlassSurface extends StatelessWidget {
             tileMode: TileMode.clamp,
           ),
           child: CustomPaint(
-            foregroundPainter: _FrostRim(
+            foregroundPainter: edgeless
+                ? null
+                : _FrostRim(
               radius: radius,
               dark: dark,
               lit: lit,
@@ -265,6 +274,7 @@ class _Lens extends SingleChildRenderObjectWidget {
     required this.floating,
     required this.tint,
     required this.blur,
+    this.edgeless = false,
     super.child,
   });
 
@@ -274,6 +284,7 @@ class _Lens extends SingleChildRenderObjectWidget {
   final bool lit;
   final Color tint;
   final double blur;
+  final bool edgeless;
 
   static Listenable? _scrolls(BuildContext context) {
     final positions = <Listenable>[];
@@ -301,7 +312,8 @@ class _Lens extends SingleChildRenderObjectWidget {
     ..lit = lit
     ..floating = floating
     ..tint = tint
-    ..blur = blur;
+    ..blur = blur
+    ..edgeless = edgeless;
 
   @override
   void updateRenderObject(BuildContext context, _RenderLens r) {
@@ -313,7 +325,8 @@ class _Lens extends SingleChildRenderObjectWidget {
       ..lit = lit
       ..floating = floating
       ..tint = tint
-      ..blur = blur;
+      ..blur = blur
+      ..edgeless = edgeless;
   }
 }
 
@@ -348,6 +361,8 @@ class _RenderLens extends RenderProxyBox {
   set tint(Color v) => _set(_tint != v, () => _tint = v);
   double _blur = 7;
   set blur(double v) => _set(_blur != v, () => _blur = v);
+  bool _edgeless = false;
+  set edgeless(bool v) => _set(_edgeless != v, () => _edgeless = v);
 
   void _set(bool changed, VoidCallback apply) {
     if (!changed) return;
@@ -468,14 +483,14 @@ class _RenderLens extends RenderProxyBox {
       ..setFloat(5, rect.height)
       ..setFloat(6, _radius * px)
       ..setFloat(7, bevel)
-      ..setFloat(8, _floating ? 0.24 : 0.16)
+      ..setFloat(8, _edgeless ? 0.0 : (_floating ? 0.24 : 0.16))
       ..setFloat(9, _tint.r)
       ..setFloat(10, _tint.g)
       ..setFloat(11, _tint.b)
       ..setFloat(12, tintAlpha)
       ..setFloat(13, _dark ? 0.10 : 0.0)
       ..setFloat(14, _dark ? 1.6 : 1.25)
-      ..setFloat(15, (_dark ? 1.1 : 1.0) * boost)
+      ..setFloat(15, _edgeless ? 0.0 : (_dark ? 1.1 : 1.0) * boost)
       ..setFloat(16, px)
       ..setFloat(17, _dark ? 1.0 : 0.0);
 
